@@ -13,12 +13,12 @@
 
 ### Appointment Management
 
-- [ ] **APPT-01**: Caller can book a new appointment (service, date/time, name, phone, email collected)
+- [x] **APPT-01**: Caller can book a new appointment (service, date/time, name, phone, email collected)
 - [x] **APPT-02**: Agent checks Google Calendar availability before confirming a booking
 - [x] **APPT-03**: Agent offers next 2-3 alternative slots when requested time is unavailable
 - [x] **APPT-04**: If alternatives declined, agent asks for caller's available window and searches for matching slot within 30 days
-- [ ] **APPT-05**: Caller can reschedule an existing appointment (looked up by name/date on Google Calendar)
-- [ ] **APPT-06**: Caller can cancel an existing appointment (agent confirms intent before cancelling)
+- [x] **APPT-05**: Caller can reschedule an existing appointment (looked up by name/date on Google Calendar)
+- [x] **APPT-06**: Caller can cancel an existing appointment (agent confirms intent before cancelling)
 
 ### RAG Knowledge Base
 
@@ -82,12 +82,12 @@
 | VOICE-01 | Phase 1 | Complete |
 | VOICE-02 | Phase 1 | Complete |
 | VOICE-03 | Phase 4 | Pending |
-| APPT-01 | Phase 3 | Pending |
+| APPT-01 | Phase 3 | Complete |
 | APPT-02 | Phase 3 | Complete |
 | APPT-03 | Phase 3 | Complete |
 | APPT-04 | Phase 3 | Complete |
-| APPT-05 | Phase 3 | Pending |
-| APPT-06 | Phase 3 | Pending |
+| APPT-05 | Phase 3 | Complete |
+| APPT-06 | Phase 3 | Complete |
 | RAG-01 | Phase 2 | Complete |
 | RAG-02 | Phase 2 | Complete |
 | RAG-03 | Phase 2 | Complete |

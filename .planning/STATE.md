@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 3 of 5 (Calendar Operations)
-Plan: 2 of 4 in current phase (03-02 complete)
+Plan: 3 of 4 in current phase (03-03 complete)
 Status: In progress
-Last activity: 2026-04-03 — Plan 03-02 complete: Google Calendar service layer + 10 unit tests, 38 total passing
+Last activity: 2026-04-03 — Plan 03-03 complete: Appointment orchestration service + 14 unit tests, 52 total passing
 
-Progress: [███████░░░] 65%
+Progress: [████████░░] 72%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [███████░░░] 65%
 | Phase 02-rag-knowledge-base P02 | 3 | 2 tasks | 6 files |
 | Phase 03-calendar-operations P01 | 4 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P02 | 5 | 2 tasks | 2 files |
+| Phase 03-calendar-operations P03 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 03-calendar-operations]: get_calendar_service is internal helper (not exported) — minimal public API surface
 - [Phase 03-calendar-operations]: CalendarError wraps all HttpError/Exception — no stack traces leaked to callers
 - [Phase 03-calendar-operations]: Test dates must use future years (2026) to avoid lead_time clamping issue in get_free_slots
+- [Phase 03-03]: AppointmentError wraps CalendarError with caller-safe messages — no raw calendar errors propagate to Retell
+- [Phase 03-03]: book_appointment uses 1-minute window (max_slots=1) to check exact slot availability, then 30-day window for alternatives
+- [Phase 03-03]: _get_calendar_service imported as private alias in appointment.py to keep public API surface minimal
 
 ### Pending Todos
 
@@ -99,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 03-02-PLAN.md — Google Calendar service layer + 10 unit tests, 38 total passing
+Stopped at: Completed 03-03-PLAN.md — Appointment orchestration service + 14 unit tests, 52 total passing
 Resume file: None
