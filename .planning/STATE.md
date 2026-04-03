@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-03T15:39:38.377Z"
+last_updated: "2026-04-03T15:43:04.000Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -23,27 +23,27 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 2 of TBD in current phase
+Plan: 3 of 3 in current phase
 Status: In progress
-Last activity: 2026-04-03 — Plan 01-02 complete: DB schema migration, ORM models, encryption service, 4 tests passing
+Last activity: 2026-04-03 — Plan 01-03 complete: FastAPI app wired with HMAC middleware, Retell router skeleton, 10 tests passing
 
-Progress: [██░░░░░░░░] 10%
+Progress: [███░░░░░░░] 15%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 2.5 min
-- Total execution time: 0.08 hours
+- Total plans completed: 3
+- Average duration: 2.3 min
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation | 2 | 5 min | 2.5 min |
+| 01-foundation | 3 | 7 min | 2.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (3 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (3 min), 01-03 (2 min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: TIMESTAMP(timezone=True) used in SQLAlchemy ORM for TIMESTAMPTZ columns — dialect-specific TIMESTAMPTZ not importable
 - [Phase 01-foundation]: server_default=func.now() on all timestamp columns makes DB clock authoritative
 - [Phase 01-foundation]: InvalidToken re-exported via __all__ in encryption module for single caller import point
+- [Phase 01-foundation]: SECRET in test_retell_auth derived from os.environ to avoid lru_cache ordering bug when tests share process
+- [Phase 01-foundation]: EXEMPT_PATHS as module-level set in middleware for O(1) path lookup and easy extension
 
 ### Pending Todos
 
@@ -77,5 +79,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 01-02-PLAN.md — DB schema migration, ORM models, Fernet encryption service, 4 tests passing
+Stopped at: Completed 01-03-PLAN.md — FastAPI app wiring, HMAC auth middleware, Retell router skeleton, 10 tests passing
 Resume file: None
