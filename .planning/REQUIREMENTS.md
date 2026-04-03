@@ -35,8 +35,8 @@
 
 ### Multi-Tenant Client Management
 
-- [ ] **TENANT-01**: Each client has isolated data (calendar, knowledge base, OAuth tokens, config) identified by client_id
-- [ ] **TENANT-02**: Google OAuth tokens stored AES-256 encrypted at rest per client
+- [x] **TENANT-01**: Each client has isolated data (calendar, knowledge base, OAuth tokens, config) identified by client_id
+- [x] **TENANT-02**: Google OAuth tokens stored AES-256 encrypted at rest per client
 - [ ] **TENANT-03**: Admin can create a new client record via CLI script
 - [ ] **TENANT-04**: Admin can run Google OAuth flow per client via CLI script
 - [ ] **TENANT-05**: Admin can ingest knowledge base documents per client via CLI script
@@ -95,8 +95,8 @@
 | NOTIF-01 | Phase 4 | Pending |
 | NOTIF-02 | Phase 4 | Pending |
 | NOTIF-03 | Phase 4 | Pending |
-| TENANT-01 | Phase 1 | Pending |
-| TENANT-02 | Phase 1 | Pending |
+| TENANT-01 | Phase 1 | Complete |
+| TENANT-02 | Phase 1 | Complete |
 | TENANT-03 | Phase 5 | Pending |
 | TENANT-04 | Phase 5 | Pending |
 | TENANT-05 | Phase 5 | Pending |
