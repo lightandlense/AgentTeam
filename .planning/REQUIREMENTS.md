@@ -44,7 +44,7 @@
 ### Infrastructure
 
 - [ ] **INFRA-01**: FastAPI backend deployed to Railway/Render with public HTTPS URL
-- [ ] **INFRA-02**: PostgreSQL database with pgvector extension provisioned
+- [x] **INFRA-02**: PostgreSQL database with pgvector extension provisioned
 - [ ] **INFRA-03**: Health check endpoint returns 200 OK
 
 ## v2 Requirements
@@ -101,7 +101,7 @@
 | TENANT-04 | Phase 5 | Pending |
 | TENANT-05 | Phase 5 | Pending |
 | INFRA-01 | Phase 5 | Pending |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Pending |
 
 **Coverage:**

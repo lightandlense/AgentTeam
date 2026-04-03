@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffold, pinned dependencies, Pydantic Settings config, async SQLAlchemy database layer
+- [x] 01-01-PLAN.md — Project scaffold, pinned dependencies, Pydantic Settings config, async SQLAlchemy database layer
 - [ ] 01-02-PLAN.md — SQL migration (3 tables + ivfflat index), SQLAlchemy ORM models, Fernet encryption service + tests
 - [ ] 01-03-PLAN.md — FastAPI app wiring, Retell HMAC middleware, /health endpoint, router skeleton, auth + health tests
 
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 1/3 | In progress | - |
 | 2. RAG Knowledge Base | 0/TBD | Not started | - |
 | 3. Calendar Operations | 0/TBD | Not started | - |
 | 4. Notifications and Edge Cases | 0/TBD | Not started | - |
