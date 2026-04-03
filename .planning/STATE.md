@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-03T18:30:37.575Z"
+last_updated: "2026-04-03T19:08:10.952Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 10
+  completed_plans: 7
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A caller can phone a local business, book or change an appointment, and get answers to their questions — entirely handled by AI with no human staff required.
-**Current focus:** Phase 2 — RAG Knowledge Base
+**Current focus:** Phase 3 — Calendar Operations
 
 ## Current Position
 
-Phase: 2 of 5 (RAG Knowledge Base)
-Plan: 3 of 3 in current phase (02-03 complete)
+Phase: 3 of 5 (Calendar Operations)
+Plan: 1 of 4 in current phase (03-01 complete)
 Status: In progress
-Last activity: 2026-04-03 — Plan 02-03 complete: RAG query service (embed/retrieve/generate), Retell webhook dispatch, 23 tests passing
+Last activity: 2026-04-03 — Plan 03-01 complete: calendar config schema (5 columns in SQL migration + Client ORM), 28 tests passing
 
-Progress: [█████░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [█████░░░░░] 40%
 
 *Updated after each plan completion*
 | Phase 02-rag-knowledge-base P02 | 3 | 2 tasks | 6 files |
+| Phase 03-calendar-operations P01 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Recent decisions affecting current work:
 - [Phase 02-rag-knowledge-base]: EXEMPT_PREFIXES set added to retell_auth.py for prefix-based /admin/* middleware bypass
 - [Phase 02-rag-knowledge-base]: POST-Redirect-GET (303) for upload/delete to prevent form resubmission
 - [Phase 02-rag-knowledge-base]: Unsupported file type returns 200 re-render (not redirect) so error message visible to user
+- [Phase 03-calendar-operations]: ADD COLUMN IF NOT EXISTS per-statement (no transaction block) so IF NOT EXISTS guards work correctly across repeated runs
+- [Phase 03-calendar-operations]: business_hours as JSONB {start,end} HH:MM strings parallels existing hours JSONB column pattern
 
 ### Pending Todos
 
@@ -92,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 02-02-PLAN.md — Admin document management panel (Jinja2 UI, 3-endpoint router), 28 tests passing
+Stopped at: Completed 03-01-PLAN.md — calendar config schema: 5 columns in SQL migration + Client ORM, 28 tests passing
 Resume file: None

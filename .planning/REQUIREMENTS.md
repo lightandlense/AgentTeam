@@ -14,7 +14,7 @@
 ### Appointment Management
 
 - [ ] **APPT-01**: Caller can book a new appointment (service, date/time, name, phone, email collected)
-- [ ] **APPT-02**: Agent checks Google Calendar availability before confirming a booking
+- [x] **APPT-02**: Agent checks Google Calendar availability before confirming a booking
 - [ ] **APPT-03**: Agent offers next 2-3 alternative slots when requested time is unavailable
 - [ ] **APPT-04**: If alternatives declined, agent asks for caller's available window and searches for matching slot within 30 days
 - [ ] **APPT-05**: Caller can reschedule an existing appointment (looked up by name/date on Google Calendar)
@@ -83,7 +83,7 @@
 | VOICE-02 | Phase 1 | Complete |
 | VOICE-03 | Phase 4 | Pending |
 | APPT-01 | Phase 3 | Pending |
-| APPT-02 | Phase 3 | Pending |
+| APPT-02 | Phase 3 | Complete |
 | APPT-03 | Phase 3 | Pending |
 | APPT-04 | Phase 3 | Pending |
 | APPT-05 | Phase 3 | Pending |
