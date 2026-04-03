@@ -379,3 +379,67 @@ async def test_existing_answer_question_unchanged():
 
     assert data["tool_call_id"] == "tc-12"
     assert data["result"] == "We're open 9-5"
+
+
+# ---------------------------------------------------------------------------
+# Regression: CalendarError in check_availability returns TRANSFER_SENTINEL
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_check_availability_transfers_on_calendar_error():
+    """CalendarError from get_free_slots must return TRANSFER_SENTINEL, not raise."""
+    from app.services.calendar import CalendarError
+
+    payload = _tool_call(
+        "check_availability",
+        "tc-13",
+        {
+            "client_id": "galvan",
+            "window_start": "2026-06-15T08:00:00+00:00",
+            "window_end": "2026-06-15T18:00:00+00:00",
+        },
+    )
+    with patch(
+        "app.routers.retell.get_free_slots",
+        new=AsyncMock(side_effect=CalendarError("Google API down")),
+    ):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            data = await _post(client, payload)
+
+    assert data["tool_call_id"] == "tc-13"
+    assert data["result"] == TRANSFER_SENTINEL
+
+
+# ---------------------------------------------------------------------------
+# Regression: find_appointment dispatch passes datetime (not date)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_find_appointment_passes_datetime_not_date():
+    """find_appointment must receive a datetime, not a date — no .date() stripping."""
+    from datetime import date
+
+    payload = _tool_call(
+        "find_appointment",
+        "tc-14",
+        {
+            "client_id": "galvan",
+            "caller_name": "John Smith",
+            "appointment_date": "2026-06-15T00:00:00",
+        },
+    )
+    captured_args = {}
+
+    async def _capture(*args, **kwargs):
+        captured_args["appointment_date"] = args[3]  # positional: db, client_id, caller_name, appointment_date
+        return []
+
+    with patch("app.routers.retell.find_appointment", new=AsyncMock(side_effect=_capture)):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            await _post(client, payload)
+
+    passed = captured_args["appointment_date"]
+    assert isinstance(passed, datetime), f"Expected datetime, got {type(passed)}"
+    assert not isinstance(passed, date) or isinstance(passed, datetime), "Must be datetime not bare date"
