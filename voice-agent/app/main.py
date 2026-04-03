@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.database import engine
 from app.middleware.retell_auth import RetellAuthMiddleware
+from app.routers import admin as admin_router
 from app.routers import retell as retell_router
 
 
@@ -20,6 +21,7 @@ app = FastAPI(title="Voice Agent API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(RetellAuthMiddleware)
 
 app.include_router(retell_router.router)
+app.include_router(admin_router.router)
 
 
 @app.get("/health")

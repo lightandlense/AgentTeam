@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base &mdash; {{ client_id }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { margin-bottom: 1rem; }
+        .message-ok  { color: green; margin-bottom: 1rem; }
+        .message-err { color: red;   margin-bottom: 1rem; }
+        form.upload  { margin-bottom: 2rem; }
+        ul.doc-list  { list-style: none; padding: 0; }
+        ul.doc-list li { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid #ddd; }
+        button.delete-btn { padding: 0.2rem 0.6rem; background: #c00; color: #fff; border: none; cursor: pointer; border-radius: 3px; }
+        .no-docs { color: #888; }
+    </style>
+</head>
+<body>
+    <h1>Knowledge Base &mdash; {{ client_id }}</h1>
+
+    {% if message %}
+    <p class="{{ 'message-err' if error else 'message-ok' }}">{{ message }}</p>
+    {% endif %}
+
+    <form class="upload" method="post" action="/admin/documents/upload" enctype="multipart/form-data">
+        <input type="hidden" name="client_id" value="{{ client_id }}">
+        <label for="file">Select document (.pdf, .docx, .txt, .csv):</label><br>
+        <input id="file" type="file" name="file" accept=".pdf,.docx,.txt,.csv" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    <h2>Ingested Documents</h2>
+    {% if documents %}
+    <ul class="doc-list">
+        {% for doc in documents %}
+        <li>
+            <span>{{ doc.doc_name }}</span>
+            <span style="color:#666;">({{ doc.chunk_count }} chunk{{ 's' if doc.chunk_count != 1 else '' }})</span>
+            <form method="post" action="/admin/documents/delete" style="margin:0;">
+                <input type="hidden" name="client_id" value="{{ client_id }}">
+                <input type="hidden" name="doc_name"  value="{{ doc.doc_name }}">
+                <button class="delete-btn" type="submit">Delete</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="no-docs">No documents ingested yet.</p>
+    {% endif %}
+</body>
+</html>
