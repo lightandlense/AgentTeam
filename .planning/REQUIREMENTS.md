@@ -90,8 +90,8 @@
 | APPT-06 | Phase 3 | Pending |
 | RAG-01 | Phase 2 | Complete |
 | RAG-02 | Phase 2 | Complete |
-| RAG-03 | Phase 2 | Pending |
-| RAG-04 | Phase 2 | Pending |
+| RAG-03 | Phase 2 | Complete |
+| RAG-04 | Phase 2 | Complete |
 | NOTIF-01 | Phase 4 | Pending |
 | NOTIF-02 | Phase 4 | Pending |
 | NOTIF-03 | Phase 4 | Pending |
