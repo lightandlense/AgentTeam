@@ -7,8 +7,8 @@
 
 ### Voice & Telephony
 
-- [ ] **VOICE-01**: Inbound calls answered via Retell AI agent linked to a Twilio phone number
-- [ ] **VOICE-02**: Retell webhook calls verified via HMAC signature before processing
+- [x] **VOICE-01**: Inbound calls answered via Retell AI agent linked to a Twilio phone number
+- [x] **VOICE-02**: Retell webhook calls verified via HMAC signature before processing
 - [ ] **VOICE-03**: Caller can escalate to callback request if agent cannot help after 2 attempts
 
 ### Appointment Management
@@ -24,8 +24,8 @@
 
 - [ ] **RAG-01**: Agent answers caller questions using per-client vector knowledge base (services, pricing, hours, care instructions, FAQs)
 - [ ] **RAG-02**: When no relevant chunks found above similarity threshold, agent offers callback rather than hallucinating
-- [ ] **RAG-03**: Admin can ingest documents into client knowledge base (PDF, DOCX, TXT, CSV)
-- [ ] **RAG-04**: Re-ingesting a document replaces old chunks without requiring full rebuild
+- [x] **RAG-03**: Admin can ingest documents into client knowledge base (PDF, DOCX, TXT, CSV)
+- [x] **RAG-04**: Re-ingesting a document replaces old chunks without requiring full rebuild
 
 ### Notifications
 
@@ -45,7 +45,7 @@
 
 - [ ] **INFRA-01**: FastAPI backend deployed to Railway/Render with public HTTPS URL
 - [x] **INFRA-02**: PostgreSQL database with pgvector extension provisioned
-- [ ] **INFRA-03**: Health check endpoint returns 200 OK
+- [x] **INFRA-03**: Health check endpoint returns 200 OK
 
 ## v2 Requirements
 
@@ -79,8 +79,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VOICE-01 | Phase 1 | Pending |
-| VOICE-02 | Phase 1 | Pending |
+| VOICE-01 | Phase 1 | Complete |
+| VOICE-02 | Phase 1 | Complete |
 | VOICE-03 | Phase 4 | Pending |
 | APPT-01 | Phase 3 | Pending |
 | APPT-02 | Phase 3 | Pending |
@@ -102,7 +102,7 @@
 | TENANT-05 | Phase 5 | Pending |
 | INFRA-01 | Phase 5 | Pending |
 | INFRA-02 | Phase 1 | Complete |
-| INFRA-03 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 24 total

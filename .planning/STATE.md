@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-04-03T17:53:08.487Z"
+status: in_progress
+last_updated: "2026-04-03T18:19:08Z"
 progress:
-  total_phases: 1
+  total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A caller can phone a local business, book or change an appointment, and get answers to their questions — entirely handled by AI with no human staff required.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 2 — RAG Knowledge Base
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 3 of 3 in current phase
+Phase: 2 of 5 (RAG Knowledge Base)
+Plan: 1 of 3 in current phase (02-01 complete)
 Status: In progress
-Last activity: 2026-04-03 — Plan 01-03 complete: FastAPI app wired with HMAC middleware, Retell router skeleton, 10 tests passing
+Last activity: 2026-04-03 — Plan 02-01 complete: Document ingestion service (parse/chunk/embed/store), 18 tests passing
 
-Progress: [███░░░░░░░] 15%
+Progress: [████░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -41,9 +41,10 @@ Progress: [███░░░░░░░] 15%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 7 min | 2.3 min |
+| 02-rag-knowledge-base | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (3 min), 01-03 (2 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (3 min), 01-03 (2 min), 02-01 (3 min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -67,6 +68,11 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: InvalidToken re-exported via __all__ in encryption module for single caller import point
 - [Phase 01-foundation]: SECRET in test_retell_auth derived from os.environ to avoid lru_cache ordering bug when tests share process
 - [Phase 01-foundation]: EXEMPT_PATHS as module-level set in middleware for O(1) path lookup and easy extension
+- [Phase 02-01]: tiktoken cl100k_base used for chunking — same encoding as text-embedding-3-small, token counts match model expectations
+- [Phase 02-01]: SIMILARITY_THRESHOLD = 0.75 defined in ingestion.py as canonical source — RAG query service imports from here
+- [Phase 02-01]: CSV header repeated in every chunk for self-contained retrieval context
+- [Phase 02-01]: delete_document() called inside ingest_document() making re-ingestion atomic (delete-then-insert)
+- [Phase 02-01]: Local imports for pypdf/python-docx inside parse_file() to avoid startup cost when ingestion is idle
 
 ### Pending Todos
 
@@ -79,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 01-03-PLAN.md — FastAPI app wiring, HMAC auth middleware, Retell router skeleton, 10 tests passing
+Stopped at: Completed 02-01-PLAN.md — Document ingestion service, chunking, OpenAI embeddings, 18 tests passing
 Resume file: None

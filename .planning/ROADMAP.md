@@ -49,7 +49,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Document ingestion service: parsers, chunker, OpenAI embedder, DB write/delete, unit tests
+- [x] 02-01-PLAN.md — Document ingestion service: parsers, chunker, OpenAI embedder, DB write/delete, unit tests
 - [ ] 02-02-PLAN.md — Admin web panel: Jinja2 upload/list/delete UI, admin router, tests
 - [ ] 02-03-PLAN.md — RAG query service: similarity search, Claude Haiku answer generation, Retell webhook wiring, tests
 
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-04-03 |
-| 2. RAG Knowledge Base | 0/3 | Not started | - |
+| 2. RAG Knowledge Base | 1/3 | In progress | - |
 | 3. Calendar Operations | 0/TBD | Not started | - |
 | 4. Notifications and Edge Cases | 0/TBD | Not started | - |
 | 5. Admin and Deployment | 0/TBD | Not started | - |
