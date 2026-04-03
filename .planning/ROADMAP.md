@@ -50,8 +50,8 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Document ingestion service: parsers, chunker, OpenAI embedder, DB write/delete, unit tests
-- [ ] 02-02-PLAN.md — Admin web panel: Jinja2 upload/list/delete UI, admin router, tests
-- [ ] 02-03-PLAN.md — RAG query service: similarity search, Claude Haiku answer generation, Retell webhook wiring, tests
+- [x] 02-02-PLAN.md — Admin web panel: Jinja2 upload/list/delete UI, admin router, tests
+- [x] 02-03-PLAN.md — RAG query service: similarity search, Claude Haiku answer generation, Retell webhook wiring, tests
 
 ### Phase 3: Calendar Operations
 **Goal**: A caller can book a new appointment, reschedule an existing one, or cancel one — all handled autonomously by the agent against Google Calendar with no human involvement
@@ -63,7 +63,13 @@ Plans:
   3. A caller who declines all alternatives can specify an available window and the agent finds a matching slot within 30 days
   4. A caller who provides their name and appointment date can reschedule to a new time and the original Google Calendar event is updated
   5. A caller who provides their name and appointment date can cancel and the Google Calendar event is removed after the agent confirms intent
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — DB migration (5 calendar config columns on clients) + Client ORM model update
+- [ ] 03-02-PLAN.md — Google Calendar service: OAuth refresh, get_free_slots, create/update/delete events + tests
+- [ ] 03-03-PLAN.md — Appointment orchestration service: booking intake, alternatives, reschedule/cancel + tests
+- [ ] 03-04-PLAN.md — Retell webhook wiring: 6 calendar tool dispatch branches + tests
 
 ### Phase 4: Notifications and Edge Cases
 **Goal**: Every appointment action triggers email confirmations to the caller and alerts to the business owner; unresolvable calls route to a callback request rather than failing silently
@@ -96,6 +102,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-04-03 |
 | 2. RAG Knowledge Base | 3/3 | Complete   | 2026-04-03 |
-| 3. Calendar Operations | 0/TBD | Not started | - |
+| 3. Calendar Operations | 0/4 | Not started | - |
 | 4. Notifications and Edge Cases | 0/TBD | Not started | - |
 | 5. Admin and Deployment | 0/TBD | Not started | - |
