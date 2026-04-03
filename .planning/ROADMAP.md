@@ -13,7 +13,7 @@ The project builds a fully autonomous AI voice agent for local businesses in fiv
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Project scaffold, database schema, multi-tenant isolation, Retell webhook auth (completed 2026-04-03)
-- [ ] **Phase 2: RAG Knowledge Base** - Document ingestion pipeline, vector search, Claude Haiku answer generation
+- [x] **Phase 2: RAG Knowledge Base** - Document ingestion pipeline, vector search, Claude Haiku answer generation (completed 2026-04-03)
 - [ ] **Phase 3: Calendar Operations** - Availability check, booking, rescheduling, cancellation via Google Calendar
 - [ ] **Phase 4: Notifications and Edge Cases** - Email confirmations, owner alerts, callback escalation
 - [ ] **Phase 5: Admin and Deployment** - CLI onboarding scripts, Railway deployment, public HTTPS
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-04-03 |
-| 2. RAG Knowledge Base | 1/3 | In progress | - |
+| 2. RAG Knowledge Base | 3/3 | Complete   | 2026-04-03 |
 | 3. Calendar Operations | 0/TBD | Not started | - |
 | 4. Notifications and Edge Cases | 0/TBD | Not started | - |
 | 5. Admin and Deployment | 0/TBD | Not started | - |

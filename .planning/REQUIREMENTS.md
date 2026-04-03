@@ -22,8 +22,8 @@
 
 ### RAG Knowledge Base
 
-- [ ] **RAG-01**: Agent answers caller questions using per-client vector knowledge base (services, pricing, hours, care instructions, FAQs)
-- [ ] **RAG-02**: When no relevant chunks found above similarity threshold, agent offers callback rather than hallucinating
+- [x] **RAG-01**: Agent answers caller questions using per-client vector knowledge base (services, pricing, hours, care instructions, FAQs)
+- [x] **RAG-02**: When no relevant chunks found above similarity threshold, agent offers callback rather than hallucinating
 - [x] **RAG-03**: Admin can ingest documents into client knowledge base (PDF, DOCX, TXT, CSV)
 - [x] **RAG-04**: Re-ingesting a document replaces old chunks without requiring full rebuild
 
@@ -88,8 +88,8 @@
 | APPT-04 | Phase 3 | Pending |
 | APPT-05 | Phase 3 | Pending |
 | APPT-06 | Phase 3 | Pending |
-| RAG-01 | Phase 2 | Pending |
-| RAG-02 | Phase 2 | Pending |
+| RAG-01 | Phase 2 | Complete |
+| RAG-02 | Phase 2 | Complete |
 | RAG-03 | Phase 2 | Pending |
 | RAG-04 | Phase 2 | Pending |
 | NOTIF-01 | Phase 4 | Pending |

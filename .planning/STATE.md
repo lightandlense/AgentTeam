@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-last_updated: "2026-04-03T18:19:08Z"
+status: unknown
+last_updated: "2026-04-03T18:25:53.327Z"
 progress:
-  total_phases: 5
-  completed_phases: 1
+  total_phases: 2
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 6
 ---
 
 # Project State
@@ -23,31 +23,32 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 2 of 5 (RAG Knowledge Base)
-Plan: 1 of 3 in current phase (02-01 complete)
+Plan: 3 of 3 in current phase (02-03 complete)
 Status: In progress
-Last activity: 2026-04-03 — Plan 02-01 complete: Document ingestion service (parse/chunk/embed/store), 18 tests passing
+Last activity: 2026-04-03 — Plan 02-03 complete: RAG query service (embed/retrieve/generate), Retell webhook dispatch, 23 tests passing
 
-Progress: [████░░░░░░] 20%
+Progress: [█████░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 2.3 min
-- Total execution time: 0.12 hours
+- Total plans completed: 5
+- Average duration: 2.4 min
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 7 min | 2.3 min |
-| 02-rag-knowledge-base | 1 | 3 min | 3 min |
+| 02-rag-knowledge-base | 3 | 10 min | 3.3 min |
 
 **Recent Trend:**
 - Last 5 plans: 01-01 (2 min), 01-02 (3 min), 01-03 (2 min), 02-01 (3 min)
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 02-rag-knowledge-base P02 | 3 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,12 @@ Recent decisions affecting current work:
 - [Phase 02-01]: CSV header repeated in every chunk for self-contained retrieval context
 - [Phase 02-01]: delete_document() called inside ingest_document() making re-ingestion atomic (delete-then-insert)
 - [Phase 02-01]: Local imports for pypdf/python-docx inside parse_file() to avoid startup cost when ingestion is idle
+- [Phase 02-03]: TRANSFER_SENTINEL __TRANSFER__ returned as Retell tool result; Retell LLM prompt interprets it as cue to invoke transfer_call — no direct Retell API call needed
+- [Phase 02-03]: retrieve_chunks uses sqlalchemy text() with CAST(:q_vec AS vector) for pgvector <=> operator compatibility
+- [Phase 02-03]: answer_question checks TRANSFER_SENTINEL via exact match and substring to handle Haiku wrapping it in extra text
+- [Phase 02-rag-knowledge-base]: EXEMPT_PREFIXES set added to retell_auth.py for prefix-based /admin/* middleware bypass
+- [Phase 02-rag-knowledge-base]: POST-Redirect-GET (303) for upload/delete to prevent form resubmission
+- [Phase 02-rag-knowledge-base]: Unsupported file type returns 200 re-render (not redirect) so error message visible to user
 
 ### Pending Todos
 
@@ -85,5 +92,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 02-01-PLAN.md — Document ingestion service, chunking, OpenAI embeddings, 18 tests passing
+Stopped at: Completed 02-03-PLAN.md — RAG query service, Retell webhook wiring, 23 tests passing
 Resume file: None
