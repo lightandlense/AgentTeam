@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-03T19:20:39.610Z"
+last_updated: "2026-04-03T19:37:25.805Z"
 progress:
   total_phases: 3
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 Phase: 3 of 5 (Calendar Operations)
 Plan: 4 of 4 in current phase (03-04 complete — phase complete)
 Status: Phase 3 complete
-Last activity: 2026-04-03 — Plan 03-04 complete: Retell calendar dispatch wired, 12 tests, 64 total passing
+Last activity: 2026-04-03 — Plan 03-05 complete: CalendarError bug fix and datetime type fix, 14 tests in test_retell_calendar.py, 66 total passing
 
 Progress: [██████████] 100%
 
@@ -53,6 +53,7 @@ Progress: [██████████] 100%
 | Phase 03-calendar-operations P02 | 5 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P03 | 2 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P04 | 3 | 2 tasks | 2 files |
+| Phase 03-calendar-operations P05 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 03-03]: _get_calendar_service imported as private alias in appointment.py to keep public API surface minimal
 - [Phase 03-04]: Stub /tools/* endpoints removed — all calendar dispatch via single /webhook handler
 - [Phase 03-04]: AppointmentError on any calendar branch returns TRANSFER_SENTINEL (not 500)
+- [Phase 03-calendar-operations]: CalendarError added to except tuple in check_availability — CalendarError raised directly by get_free_slots (not wrapped in AppointmentError), must be caught at call site
+- [Phase 03-calendar-operations]: find_appointment receives datetime — .date() conversion caused TypeError; appointment service expects datetime for comparison
 
 ### Pending Todos
 
@@ -106,5 +109,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 03-04-PLAN.md — Retell calendar dispatch wired, 12 tests, 64 total passing
+Stopped at: Completed 03-05-PLAN.md — CalendarError bug fix and datetime type fix, 14 tests in test_retell_calendar.py, 66 total passing
 Resume file: None
