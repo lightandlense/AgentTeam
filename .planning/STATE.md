@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-03T19:13:26.984Z"
+last_updated: "2026-04-03T19:20:39.610Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 3 of 5 (Calendar Operations)
-Plan: 3 of 4 in current phase (03-03 complete)
-Status: In progress
-Last activity: 2026-04-03 — Plan 03-03 complete: Appointment orchestration service + 14 unit tests, 52 total passing
+Plan: 4 of 4 in current phase (03-04 complete — phase complete)
+Status: Phase 3 complete
+Last activity: 2026-04-03 — Plan 03-04 complete: Retell calendar dispatch wired, 12 tests, 64 total passing
 
-Progress: [████████░░] 72%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [████████░░] 72%
 | Phase 03-calendar-operations P01 | 4 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P02 | 5 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P03 | 2 | 2 tasks | 2 files |
+| Phase 03-calendar-operations P04 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - [Phase 03-03]: AppointmentError wraps CalendarError with caller-safe messages — no raw calendar errors propagate to Retell
 - [Phase 03-03]: book_appointment uses 1-minute window (max_slots=1) to check exact slot availability, then 30-day window for alternatives
 - [Phase 03-03]: _get_calendar_service imported as private alias in appointment.py to keep public API surface minimal
+- [Phase 03-04]: Stub /tools/* endpoints removed — all calendar dispatch via single /webhook handler
+- [Phase 03-04]: AppointmentError on any calendar branch returns TRANSFER_SENTINEL (not 500)
 
 ### Pending Todos
 
@@ -103,5 +106,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 03-03-PLAN.md — Appointment orchestration service + 14 unit tests, 52 total passing
+Stopped at: Completed 03-04-PLAN.md — Retell calendar dispatch wired, 12 tests, 64 total passing
 Resume file: None
