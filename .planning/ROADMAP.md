@@ -30,7 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A Google OAuth token written for client A is stored encrypted in the database and cannot be read as plaintext by inspecting the row
   4. The health check endpoint at `/health` returns HTTP 200 with no authentication required
   5. The FastAPI app starts locally and connects to PostgreSQL with pgvector extension available
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project scaffold, pinned dependencies, Pydantic Settings config, async SQLAlchemy database layer
+- [ ] 01-02-PLAN.md — SQL migration (3 tables + ivfflat index), SQLAlchemy ORM models, Fernet encryption service + tests
+- [ ] 01-03-PLAN.md — FastAPI app wiring, Retell HMAC middleware, /health endpoint, router skeleton, auth + health tests
 
 ### Phase 2: RAG Knowledge Base
 **Goal**: Callers can ask a business question and receive a grounded answer generated from that client's ingested documents, with graceful fallback when no relevant content is found
@@ -84,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/3 | Not started | - |
 | 2. RAG Knowledge Base | 0/TBD | Not started | - |
 | 3. Calendar Operations | 0/TBD | Not started | - |
 | 4. Notifications and Edge Cases | 0/TBD | Not started | - |
