@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import TIMESTAMP, ForeignKey, Integer, Text
+from sqlalchemy import ARRAY, TIMESTAMP, ForeignKey, Integer, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -27,6 +27,21 @@ class Client(Base):
     )
     hours: Mapped[Any] = mapped_column(
         JSONB, nullable=True, server_default="'{}'::jsonb"
+    )
+    working_days: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), nullable=False, server_default="{1,2,3,4,5}"
+    )
+    business_hours: Mapped[Any] = mapped_column(
+        JSONB, nullable=False, server_default='\'{"start": "09:00", "end": "17:00"}\''
+    )
+    slot_duration_minutes: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="60"
+    )
+    buffer_minutes: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    lead_time_minutes: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="60"
     )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
