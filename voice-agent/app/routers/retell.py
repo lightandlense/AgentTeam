@@ -14,7 +14,7 @@ from app.services.appointment import (
     find_slot_in_window,
     reschedule_appointment,
 )
-from app.services.calendar import get_free_slots
+from app.services.calendar import CalendarError, get_free_slots
 from app.services.rag import TRANSFER_SENTINEL, answer_question
 
 logger = logging.getLogger(__name__)
@@ -56,8 +56,8 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 result = TRANSFER_SENTINEL
             else:
                 result = {"slots": [s.isoformat() for s in slots]}
-        except AppointmentError as exc:
-            logger.exception("AppointmentError in check_availability: %s", exc)
+        except (AppointmentError, CalendarError) as exc:
+            logger.exception("CalendarError/AppointmentError in check_availability: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
         return {"tool_call_id": tool_call_id, "result": result}
 
@@ -132,7 +132,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         try:
             client_id = args.get("client_id", "")
             caller_name = args.get("caller_name", "")
-            appointment_date = datetime.fromisoformat(args.get("appointment_date")).date()
+            appointment_date = datetime.fromisoformat(args.get("appointment_date"))
             matches = await find_appointment(db, client_id, caller_name, appointment_date)
             if not matches:
                 result = {"found": False}
