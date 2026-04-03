@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-03T19:08:10.952Z"
+last_updated: "2026-04-03T19:13:26.984Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 3 of 5 (Calendar Operations)
-Plan: 1 of 4 in current phase (03-01 complete)
+Plan: 2 of 4 in current phase (03-02 complete)
 Status: In progress
-Last activity: 2026-04-03 — Plan 03-01 complete: calendar config schema (5 columns in SQL migration + Client ORM), 28 tests passing
+Last activity: 2026-04-03 — Plan 03-02 complete: Google Calendar service layer + 10 unit tests, 38 total passing
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 65%
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [██████░░░░] 60%
 *Updated after each plan completion*
 | Phase 02-rag-knowledge-base P02 | 3 | 2 tasks | 6 files |
 | Phase 03-calendar-operations P01 | 4 | 2 tasks | 2 files |
+| Phase 03-calendar-operations P02 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 02-rag-knowledge-base]: Unsupported file type returns 200 re-render (not redirect) so error message visible to user
 - [Phase 03-calendar-operations]: ADD COLUMN IF NOT EXISTS per-statement (no transaction block) so IF NOT EXISTS guards work correctly across repeated runs
 - [Phase 03-calendar-operations]: business_hours as JSONB {start,end} HH:MM strings parallels existing hours JSONB column pattern
+- [Phase 03-calendar-operations]: get_calendar_service is internal helper (not exported) — minimal public API surface
+- [Phase 03-calendar-operations]: CalendarError wraps all HttpError/Exception — no stack traces leaked to callers
+- [Phase 03-calendar-operations]: Test dates must use future years (2026) to avoid lead_time clamping issue in get_free_slots
 
 ### Pending Todos
 
@@ -95,5 +99,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Completed 03-01-PLAN.md — calendar config schema: 5 columns in SQL migration + Client ORM, 28 tests passing
+Stopped at: Completed 03-02-PLAN.md — Google Calendar service layer + 10 unit tests, 38 total passing
 Resume file: None
