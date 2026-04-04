@@ -166,14 +166,19 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
     elif tool_name == "check_availability":
         try:
             client_id = args.get("client_id", "")
+            from datetime import timedelta
             now = datetime.now()
             window_start = datetime.fromisoformat(args.get("window_start"))
             window_end = datetime.fromisoformat(args.get("window_end"))
-            # If the agent generated a past date, snap window to next 7 days from now
+            # If the agent generated a past date, find the next future date
+            # with the same day-of-week so "Wednesday" → next real Wednesday
             if window_start < now:
-                from datetime import timedelta
-                window_start = now
-                window_end = now + timedelta(days=7)
+                duration = window_end - window_start
+                days_ahead = (window_start.weekday() - now.weekday()) % 7
+                if days_ahead == 0:
+                    days_ahead = 7  # same day of week → next week
+                window_start = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=days_ahead)
+                window_end = window_start + (duration if duration.total_seconds() > 0 else timedelta(days=1))
             slots = await get_free_slots(db, client_id, window_start, window_end, max_slots=3)
             if not slots:
                 result = TRANSFER_SENTINEL
@@ -218,14 +223,6 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
                     "slot": booking.slot.isoformat(),
                 }
                 owner_email, business_name, tz = await _get_client_meta(db, client_id)
-                await _safe_send(send_caller_confirmation(
-                    caller_email=booking_req.email,
-                    caller_name=booking_req.name,
-                    business_name=business_name,
-                    action="booked",
-                    appointment_dt=booking.slot,
-                    business_timezone=tz,
-                ))
                 await _safe_send(send_owner_alert(
                     owner_email=owner_email,
                     business_name=business_name,
