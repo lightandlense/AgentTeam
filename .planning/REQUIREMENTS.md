@@ -37,9 +37,9 @@
 
 - [x] **TENANT-01**: Each client has isolated data (calendar, knowledge base, OAuth tokens, config) identified by client_id
 - [x] **TENANT-02**: Google OAuth tokens stored AES-256 encrypted at rest per client
-- [ ] **TENANT-03**: Admin can create a new client record via CLI script
-- [ ] **TENANT-04**: Admin can run Google OAuth flow per client via CLI script
-- [ ] **TENANT-05**: Admin can ingest knowledge base documents per client via CLI script
+- [x] **TENANT-03**: Admin can create a new client record via CLI script
+- [x] **TENANT-04**: Admin can run Google OAuth flow per client via CLI script
+- [x] **TENANT-05**: Admin can ingest knowledge base documents per client via CLI script
 
 ### Infrastructure
 
@@ -97,9 +97,9 @@
 | NOTIF-03 | Phase 4 | Complete |
 | TENANT-01 | Phase 1 | Complete |
 | TENANT-02 | Phase 1 | Complete |
-| TENANT-03 | Phase 5 | Pending |
-| TENANT-04 | Phase 5 | Pending |
-| TENANT-05 | Phase 5 | Pending |
+| TENANT-03 | Phase 5 | Complete |
+| TENANT-04 | Phase 5 | Complete |
+| TENANT-05 | Phase 5 | Complete |
 | INFRA-01 | Phase 5 | Pending |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |

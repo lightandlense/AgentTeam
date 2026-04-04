@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-04T05:41:53.766Z"
+last_updated: "2026-04-04T16:04:36.503Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 15
+  completed_plans: 14
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A caller can phone a local business, book or change an appointment, and get answers to their questions — entirely handled by AI with no human staff required.
-**Current focus:** Phase 4 — Notifications and Edge Cases
+**Current focus:** Phase 5 — Admin and Deployment
 
 ## Current Position
 
-Phase: 4 of 4 (Notifications and Edge Cases)
-Plan: 2 of 2 in current phase (04-02 complete)
-Status: All phases complete
-Last activity: 2026-04-04 — Plan 04-02 complete: email notifications wired into retell webhook, request_callback tool (VOICE-03), 9-test suite, 75 total tests passing
+Phase: 5 of 5 (Admin and Deployment)
+Plan: 1 of 1 in current phase (05-01 complete)
+Status: Phase 5 Plan 1 complete
+Last activity: 2026-04-04 — Plan 05-01 complete: three operator CLI scripts for client onboarding (create_client.py, oauth_client.py, ingest_client.py)
 
-Progress: [█████████████] 100% (13/13 plans)
+Progress: [██████████████] 100% (14/14 plans)
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [█████████████] 100% (13/13 plans)
 | Phase 03-calendar-operations P05 | 3 | 2 tasks | 2 files |
 | Phase 04-notifications-and-edge-cases P01 | 2 | 2 tasks | 3 files |
 | Phase 04-notifications-and-edge-cases P02 | 4 | 2 tasks | 2 files |
+| Phase 05-admin-and-deployment P01 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,10 @@ Recent decisions affecting current work:
 - [Phase 04-notifications-and-edge-cases]: _safe_send(coro) wrapper in retell.py catches all email exceptions — email failures never change HTTP response to Retell
 - [Phase 04-notifications-and-edge-cases]: _get_client_meta wraps DB query in try/except, returns ('', '', 'UTC') on any error — prevents 500s when clients table absent in test env
 - [Phase 04-notifications-and-edge-cases]: request_callback tool returns TRANSFER_SENTINEL so Retell LLM transfers call to human operator (VOICE-03)
+- [Phase 05-01]: sys.path.insert(0, ".") used in CLI scripts so absolute app.* imports resolve when run from voice-agent/ directory
+- [Phase 05-01]: delete+insert for oauth_tokens upsert — simpler than SQLAlchemy merge, avoids primary-key edge cases
+- [Phase 05-01]: Client existence verified before OAuth browser flow — fail fast before opening browser for invalid client_id
+- [Phase 05-01]: ValueError from ingest_document propagates to stderr naturally — no try/except wrapper needed in CLI
 
 ### Pending Todos
 
@@ -117,5 +122,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 04-02-PLAN.md — all 13 plans complete, 75 tests passing, project at v1.0 milestone
+Stopped at: Completed 05-01-PLAN.md — three CLI scripts for operator onboarding, all 14 plans complete
 Resume file: None
