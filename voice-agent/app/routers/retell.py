@@ -60,14 +60,23 @@ def _extract_tool_call_id(body: dict) -> str:
 
 
 def _args_from_body(body: dict) -> dict:
-    """Extract tool arguments from either Simple Prompt or Conversation Flow format.
+    """Extract tool arguments from Retell webhook body.
 
-    Simple Prompt: body = {event, name, tool_call_id, arguments: {...}}
-    Conversation Flow: body = {tool_call_id, param1, param2, ...}
+    Handles multiple formats:
+    - Simple Prompt: {event, name, tool_call_id, arguments: {...}}
+    - Conversation Flow v1: {tool_call_id, args: {...}}
+    - Conversation Flow v2: {tool_call_id, input: {...}}
+    - Conversation Flow flat: {tool_call_id, param1, param2, ...}
     """
+    print("RETELL_BODY_KEYS:", list(body.keys()), flush=True)
+    print("RETELL_BODY:", body, flush=True)
     if "arguments" in body:
-        return body.get("arguments", {})
-    # Conversation Flow — params are at top level; exclude meta keys
+        return body["arguments"]
+    if "args" in body:
+        return body["args"]
+    if "input" in body:
+        return body["input"]
+    # Flat format — params at top level; exclude meta keys
     return {k: v for k, v in body.items() if k not in _META_KEYS}
 
 
