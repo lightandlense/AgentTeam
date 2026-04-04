@@ -95,62 +95,50 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
 # ---------------------------------------------------------------------------
 # Per-tool endpoints (Conversation Flow nodes)
+# Retell sends GET to validate endpoint, then POST for actual tool calls.
 # ---------------------------------------------------------------------------
 
-@router.post("/check_availability")
-async def retell_check_availability(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("check_availability", tool_call_id, args, db)
+def _tool_route(tool_name: str):
+    """Factory: returns (GET validator, POST handler) for a Conversation Flow tool endpoint."""
+    async def get_handler():
+        return {"status": "ok", "tool": tool_name}
+
+    async def post_handler(request: Request, db: AsyncSession = Depends(get_db)):
+        body = await request.json()
+        tool_call_id = _extract_tool_call_id(body)
+        args = _args_from_body(body)
+        return await _dispatch(tool_name, tool_call_id, args, db)
+
+    return get_handler, post_handler
 
 
-@router.post("/book_appointment")
-async def retell_book_appointment(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("book_appointment", tool_call_id, args, db)
+_ca_get, _ca_post = _tool_route("check_availability")
+router.add_api_route("/check_availability", _ca_get, methods=["GET"])
+router.add_api_route("/check_availability", _ca_post, methods=["POST"])
 
+_ba_get, _ba_post = _tool_route("book_appointment")
+router.add_api_route("/book_appointment", _ba_get, methods=["GET"])
+router.add_api_route("/book_appointment", _ba_post, methods=["POST"])
 
-@router.post("/find_appointment")
-async def retell_find_appointment(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("find_appointment", tool_call_id, args, db)
+_fa_get, _fa_post = _tool_route("find_appointment")
+router.add_api_route("/find_appointment", _fa_get, methods=["GET"])
+router.add_api_route("/find_appointment", _fa_post, methods=["POST"])
 
+_ra_get, _ra_post = _tool_route("reschedule_appointment")
+router.add_api_route("/reschedule_appointment", _ra_get, methods=["GET"])
+router.add_api_route("/reschedule_appointment", _ra_post, methods=["POST"])
 
-@router.post("/reschedule_appointment")
-async def retell_reschedule_appointment(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("reschedule_appointment", tool_call_id, args, db)
+_cna_get, _cna_post = _tool_route("cancel_appointment")
+router.add_api_route("/cancel_appointment", _cna_get, methods=["GET"])
+router.add_api_route("/cancel_appointment", _cna_post, methods=["POST"])
 
+_aq_get, _aq_post = _tool_route("answer_question")
+router.add_api_route("/answer_question", _aq_get, methods=["GET"])
+router.add_api_route("/answer_question", _aq_post, methods=["POST"])
 
-@router.post("/cancel_appointment")
-async def retell_cancel_appointment(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("cancel_appointment", tool_call_id, args, db)
-
-
-@router.post("/answer_question")
-async def retell_answer_question(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("answer_question", tool_call_id, args, db)
-
-
-@router.post("/request_callback")
-async def retell_request_callback(request: Request, db: AsyncSession = Depends(get_db)):
-    body = await request.json()
-    tool_call_id = _extract_tool_call_id(body)
-    args = _args_from_body(body)
-    return await _dispatch("request_callback", tool_call_id, args, db)
+_rc_get, _rc_post = _tool_route("request_callback")
+router.add_api_route("/request_callback", _rc_get, methods=["GET"])
+router.add_api_route("/request_callback", _rc_post, methods=["POST"])
 
 
 # ---------------------------------------------------------------------------
