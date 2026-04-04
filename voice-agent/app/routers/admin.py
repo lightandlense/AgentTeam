@@ -8,7 +8,7 @@ Provides:
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
@@ -288,12 +288,9 @@ async def update_client_settings(
 
     raw_days = form.getlist("working_days")
     if raw_days:
-        try:
-            client.working_days = sorted(
-                {int(d) for d in raw_days if d.isdigit() and 1 <= int(d) <= 7}
-            )
-        except (ValueError, TypeError):
-            pass  # keep existing value
+        client.working_days = sorted(
+            {int(d) for d in raw_days if d.isdigit() and 1 <= int(d) <= 7}
+        )
 
     bh_start = (form.get("bh_start") or "").strip()
     bh_end = (form.get("bh_end") or "").strip()

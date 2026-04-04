@@ -390,7 +390,7 @@ async def test_settings_post_redirects_on_success():
     finally:
         app.dependency_overrides.pop(get_db, None)
 
-    assert response.status_code in (302, 303)
+    assert response.status_code == 303
     assert "/admin/client/c1" in response.headers.get("location", "")
 
 
