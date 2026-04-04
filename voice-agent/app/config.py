@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     retell_api_key: str = ""
     retell_webhook_secret: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from_address: str = ""
 
 
 @lru_cache
