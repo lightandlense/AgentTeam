@@ -194,7 +194,11 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
                 target = now.date() + timedelta(days=days_ahead)
                 window_start = window_start.replace(year=target.year, month=target.month, day=target.day)
                 window_end = window_end.replace(year=target.year, month=target.month, day=target.day)
-                # If window_end <= window_start after replacement, extend to end of day
+                # If window is entirely before 8am (off-hours), use full business-hours day
+                if window_end.hour <= 8:
+                    window_start = window_start.replace(hour=8, minute=0, second=0)
+                    window_end = window_start.replace(hour=20, minute=0, second=0)
+                # If window_end <= window_start, extend to end of day
                 if window_end <= window_start:
                     window_end = window_start.replace(hour=23, minute=59, second=59)
             slots = await get_free_slots(db, client_id, window_start, window_end, max_slots=3)
@@ -241,6 +245,14 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
                     "slot": booking.slot.isoformat(),
                 }
                 owner_email, business_name, tz = await _get_client_meta(db, client_id)
+                await _safe_send(send_caller_confirmation(
+                    caller_email=booking_req.email,
+                    caller_name=booking_req.name,
+                    business_name=business_name,
+                    action="booked",
+                    appointment_dt=booking.slot,
+                    business_timezone=tz,
+                ))
                 await _safe_send(send_owner_alert(
                     owner_email=owner_email,
                     business_name=business_name,
