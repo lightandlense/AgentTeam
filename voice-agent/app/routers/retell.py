@@ -51,6 +51,14 @@ async def _safe_send(coro) -> None:
         logger.error("Email send failed (suppressed): %s", exc)
 
 
+_META_KEYS = {"tool_call_id", "id", "event", "name", "call_id"}
+
+
+def _extract_tool_call_id(body: dict) -> str:
+    """Extract tool call ID — Retell uses different field names across modes."""
+    return body.get("tool_call_id") or body.get("id") or body.get("call_id") or ""
+
+
 def _args_from_body(body: dict) -> dict:
     """Extract tool arguments from either Simple Prompt or Conversation Flow format.
 
@@ -60,7 +68,7 @@ def _args_from_body(body: dict) -> dict:
     if "arguments" in body:
         return body.get("arguments", {})
     # Conversation Flow — params are at top level; exclude meta keys
-    return {k: v for k, v in body.items() if k not in ("tool_call_id",)}
+    return {k: v for k, v in body.items() if k not in _META_KEYS}
 
 
 # ---------------------------------------------------------------------------
@@ -79,7 +87,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         return {"status": "received"}
 
     tool_name = body.get("name")
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
 
     return await _dispatch(tool_name, tool_call_id, args, db)
@@ -92,7 +100,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 @router.post("/check_availability")
 async def retell_check_availability(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("check_availability", tool_call_id, args, db)
 
@@ -100,7 +108,7 @@ async def retell_check_availability(request: Request, db: AsyncSession = Depends
 @router.post("/book_appointment")
 async def retell_book_appointment(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("book_appointment", tool_call_id, args, db)
 
@@ -108,7 +116,7 @@ async def retell_book_appointment(request: Request, db: AsyncSession = Depends(g
 @router.post("/find_appointment")
 async def retell_find_appointment(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("find_appointment", tool_call_id, args, db)
 
@@ -116,7 +124,7 @@ async def retell_find_appointment(request: Request, db: AsyncSession = Depends(g
 @router.post("/reschedule_appointment")
 async def retell_reschedule_appointment(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("reschedule_appointment", tool_call_id, args, db)
 
@@ -124,7 +132,7 @@ async def retell_reschedule_appointment(request: Request, db: AsyncSession = Dep
 @router.post("/cancel_appointment")
 async def retell_cancel_appointment(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("cancel_appointment", tool_call_id, args, db)
 
@@ -132,7 +140,7 @@ async def retell_cancel_appointment(request: Request, db: AsyncSession = Depends
 @router.post("/answer_question")
 async def retell_answer_question(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("answer_question", tool_call_id, args, db)
 
@@ -140,7 +148,7 @@ async def retell_answer_question(request: Request, db: AsyncSession = Depends(ge
 @router.post("/request_callback")
 async def retell_request_callback(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
-    tool_call_id = body.get("tool_call_id", "")
+    tool_call_id = _extract_tool_call_id(body)
     args = _args_from_body(body)
     return await _dispatch("request_callback", tool_call_id, args, db)
 
@@ -161,8 +169,14 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
     elif tool_name == "check_availability":
         try:
             client_id = args.get("client_id", "")
+            now = datetime.now()
             window_start = datetime.fromisoformat(args.get("window_start"))
             window_end = datetime.fromisoformat(args.get("window_end"))
+            # If the agent generated a past date, snap window to next 7 days from now
+            if window_start < now:
+                from datetime import timedelta
+                window_start = now
+                window_end = now + timedelta(days=7)
             slots = await get_free_slots(db, client_id, window_start, window_end, max_slots=3)
             if not slots:
                 result = TRANSFER_SENTINEL
