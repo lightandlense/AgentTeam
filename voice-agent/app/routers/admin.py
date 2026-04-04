@@ -185,4 +185,19 @@ async def delete_document_route(
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
+@router.get("/test-calendar/{client_id}")
+async def test_calendar(client_id: str, db: AsyncSession = Depends(get_db)):
+    """Debug endpoint: test Google Calendar connectivity for a client."""
+    from datetime import datetime, timedelta
+    from app.services.calendar import get_free_slots, CalendarError
+    try:
+        now = datetime.now()
+        slots = await get_free_slots(db, client_id, now, now + timedelta(days=7), max_slots=3)
+        return {"ok": True, "slots": [s.isoformat() for s in slots]}
+    except CalendarError as exc:
+        return {"ok": False, "error": str(exc)}
+    except Exception as exc:
+        return {"ok": False, "error": f"Unexpected: {exc}"}
+
+
 __all__ = ["router"]
