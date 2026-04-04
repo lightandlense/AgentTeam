@@ -13,6 +13,7 @@ from app.services.appointment import (
     book_appointment,
     cancel_appointment,
     find_appointment,
+    find_appointment_by_phone,
     find_slot_in_window,
     reschedule_appointment,
 )
@@ -254,9 +255,19 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     elif tool_name == "find_appointment":
         try:
             client_id = args.get("client_id", "")
+            caller_phone = args.get("caller_phone", "")
             caller_name = args.get("caller_name", "")
-            appointment_date = datetime.fromisoformat(args.get("appointment_date"))
-            matches = await find_appointment(db, client_id, caller_name, appointment_date)
+            appointment_date = args.get("appointment_date", "")
+
+            # Phone lookup is preferred — unambiguous even with duplicate names
+            if caller_phone:
+                matches = await find_appointment_by_phone(db, client_id, caller_phone)
+            else:
+                matches = await find_appointment(
+                    db, client_id, caller_name,
+                    datetime.fromisoformat(appointment_date) if appointment_date else datetime.now(),
+                )
+
             if not matches:
                 result = {"found": False}
             else:

@@ -13,9 +13,10 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
+from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.client import Client
+from app.models.client import Appointment, Client
 from app.services.calendar import (
     CalendarError,
     create_event,
@@ -35,6 +36,7 @@ __all__ = [
     "book_appointment",
     "find_slot_in_window",
     "find_appointment",
+    "find_appointment_by_phone",
     "reschedule_appointment",
     "cancel_appointment",
 ]
@@ -127,6 +129,16 @@ async def book_appointment(
                 summary=booking_request.name,
                 description=description,
             )
+            db.add(Appointment(
+                client_id=client_id,
+                event_id=event_id,
+                caller_phone=booking_request.phone,
+                caller_name=booking_request.name,
+                caller_email=booking_request.email,
+                slot_dt=requested_slot,
+                status="active",
+            ))
+            await db.commit()
             return BookingResult(
                 confirmed=True,
                 event_id=event_id,
@@ -168,6 +180,42 @@ async def find_slot_in_window(
     except CalendarError as exc:
         logger.error("CalendarError in find_slot_in_window for %s: %s", client_id, exc)
         raise AppointmentError("I'm having trouble accessing the calendar right now") from exc
+
+
+async def find_appointment_by_phone(
+    db: AsyncSession,
+    client_id: str,
+    caller_phone: str,
+) -> list[AppointmentMatch]:
+    """Look up active appointments in Postgres by caller phone number.
+
+    Returns all active appointments for this caller across any date, ordered
+    soonest first. This is the preferred lookup — no name ambiguity, no
+    calendar API call required.
+    """
+    try:
+        result = await db.execute(
+            select(Appointment)
+            .where(
+                Appointment.client_id == client_id,
+                Appointment.caller_phone == caller_phone,
+                Appointment.status == "active",
+            )
+            .order_by(Appointment.slot_dt)
+        )
+        rows = result.scalars().all()
+        return [
+            AppointmentMatch(
+                event_id=row.event_id,
+                summary=row.caller_name,
+                start=row.slot_dt,
+                end=row.slot_dt,
+            )
+            for row in rows
+        ]
+    except Exception as exc:
+        logger.error("Error in find_appointment_by_phone for %s: %s", client_id, exc)
+        raise AppointmentError("I'm having trouble looking up your appointment right now") from exc
 
 
 async def find_appointment(
@@ -262,7 +310,19 @@ async def reschedule_appointment(
     """
     try:
         new_end_dt = new_start_dt + timedelta(minutes=slot_duration_minutes)
-        return await update_event(db, client_id, event_id, new_start_dt, new_end_dt)
+        updated_event_id = await update_event(db, client_id, event_id, new_start_dt, new_end_dt)
+        result = await db.execute(
+            select(Appointment).where(
+                Appointment.client_id == client_id,
+                Appointment.event_id == event_id,
+            )
+        )
+        appt = result.scalar_one_or_none()
+        if appt is not None:
+            appt.slot_dt = new_start_dt
+            appt.updated_at = func.now()
+            await db.commit()
+        return updated_event_id
     except CalendarError as exc:
         logger.error("CalendarError in reschedule_appointment for %s: %s", client_id, exc)
         raise AppointmentError("I'm having trouble accessing the calendar right now") from exc
@@ -279,6 +339,17 @@ async def cancel_appointment(
     """
     try:
         await delete_event(db, client_id, event_id)
+        result = await db.execute(
+            select(Appointment).where(
+                Appointment.client_id == client_id,
+                Appointment.event_id == event_id,
+            )
+        )
+        appt = result.scalar_one_or_none()
+        if appt is not None:
+            appt.status = "cancelled"
+            appt.updated_at = func.now()
+            await db.commit()
     except CalendarError as exc:
         logger.error("CalendarError in cancel_appointment for %s: %s", client_id, exc)
         raise AppointmentError("I'm having trouble accessing the calendar right now") from exc

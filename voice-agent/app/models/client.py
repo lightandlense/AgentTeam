@@ -91,4 +91,27 @@ class Embedding(Base):
     )
 
 
-__all__ = ["Client", "OAuthToken", "Embedding"]
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    client_id: Mapped[str] = mapped_column(
+        Text,
+        ForeignKey("clients.client_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    event_id: Mapped[str] = mapped_column(Text, nullable=False)
+    caller_phone: Mapped[str] = mapped_column(Text, nullable=False)
+    caller_name: Mapped[str] = mapped_column(Text, nullable=False)
+    caller_email: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    slot_dt: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="active")
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+__all__ = ["Client", "OAuthToken", "Embedding", "Appointment"]

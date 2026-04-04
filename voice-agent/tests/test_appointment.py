@@ -288,7 +288,7 @@ async def test_find_appointment_returns_empty_for_no_match():
 @pytest.mark.asyncio
 async def test_reschedule_appointment_calls_update_event():
     """reschedule_appointment calls update_event with correct start/end and returns event_id."""
-    db = AsyncMock()
+    db = _make_db_no_client()
     new_start = datetime(2026, 5, 15, 10, 0, tzinfo=timezone.utc)
     duration = 90
 
@@ -308,7 +308,7 @@ async def test_reschedule_appointment_calls_update_event():
 @pytest.mark.asyncio
 async def test_cancel_appointment_calls_delete_event():
     """cancel_appointment delegates to delete_event and returns None."""
-    db = AsyncMock()
+    db = _make_db_no_client()
 
     with patch(_PATCH_DELETE_EVENT, new_callable=AsyncMock) as mock_delete:
         result = await cancel_appointment(db, _CLIENT_ID, "evt_del")
