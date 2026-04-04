@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Project scaffold, database schema, multi-tenant isolation, Retell webhook auth (completed 2026-04-03)
 - [x] **Phase 2: RAG Knowledge Base** - Document ingestion pipeline, vector search, Claude Haiku answer generation (completed 2026-04-03)
 - [x] **Phase 3: Calendar Operations** - Availability check, booking, rescheduling, cancellation via Google Calendar (completed 2026-04-03)
-- [ ] **Phase 4: Notifications and Edge Cases** - Email confirmations, owner alerts, callback escalation
+- [x] **Phase 4: Notifications and Edge Cases** - Email confirmations, owner alerts, callback escalation (completed 2026-04-04)
 - [ ] **Phase 5: Admin and Deployment** - CLI onboarding scripts, Railway deployment, public HTTPS
 
 ## Phase Details
@@ -83,8 +83,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Email notification service: SMTP config, 3 async send functions (caller confirmation, owner alert, callback request)
-- [ ] 04-02-PLAN.md — Retell webhook wiring: email calls after book/reschedule/cancel, callback on no-slot, request_callback tool + tests
+- [x] 04-01-PLAN.md — Email notification service: SMTP config, 3 async send functions (caller confirmation, owner alert, callback request)
+- [x] 04-02-PLAN.md — Retell webhook wiring: email calls after book/reschedule/cancel, callback on no-slot, request_callback tool + tests
 
 ### Phase 5: Admin and Deployment
 **Goal**: The system is live on a public HTTPS URL and Russell can onboard a new client, run their OAuth flow, and ingest their knowledge base entirely via CLI scripts
@@ -107,5 +107,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 3/3 | Complete   | 2026-04-03 |
 | 2. RAG Knowledge Base | 3/3 | Complete   | 2026-04-03 |
 | 3. Calendar Operations | 5/5 | Complete   | 2026-04-03 |
-| 4. Notifications and Edge Cases | 1/2 | In Progress|  |
+| 4. Notifications and Edge Cases | 2/2 | Complete   | 2026-04-04 |
 | 5. Admin and Deployment | 0/TBD | Not started | - |
