@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ client.business_name }} &mdash; Admin</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        nav { margin-bottom: 1.5rem; }
+        nav a { color: #555; text-decoration: none; font-size: 0.9rem; }
+        nav a:hover { text-decoration: underline; }
+        h1 { margin-bottom: 0.25rem; }
+        .subtitle { color: #666; margin-bottom: 2rem; font-size: 0.9rem; }
+        section { border: 1px solid #ddd; border-radius: 6px; padding: 1.2rem; margin-bottom: 1.5rem; }
+        section h2 { margin: 0 0 1rem; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; color: #444; }
+        label { display: block; margin-bottom: 0.8rem; font-size: 0.9rem; }
+        label span { display: block; margin-bottom: 0.2rem; font-weight: bold; }
+        input[type="text"], input[type="email"], input[type="time"], input[type="number"] {
+            width: 100%; max-width: 360px; padding: 0.4rem 0.5rem; border: 1px solid #ccc; border-radius: 3px; font-size: 0.9rem; box-sizing: border-box;
+        }
+        .days { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .days label { margin: 0; }
+        .days input[type="checkbox"] { margin-right: 0.2rem; }
+        .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .row label { flex: 1; min-width: 140px; }
+        button[type="submit"] { padding: 0.4rem 1rem; background: #333; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 0.9rem; margin-top: 0.5rem; }
+        button[type="submit"]:hover { background: #555; }
+        .message-ok  { color: green; margin-bottom: 1rem; }
+        .message-err { color: red;   margin-bottom: 1rem; }
+        .oauth-ok   { color: green; }
+        .oauth-exp  { color: #c00; }
+        .tool-result { margin-top: 0.8rem; font-size: 0.85rem; font-family: monospace; white-space: pre-wrap; background: #f4f4f4; padding: 0.6rem; border-radius: 3px; display: none; }
+        a.doc-link { color: #333; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <nav><a href="/admin/">← All clients</a></nav>
+
+    <h1>{{ client.business_name }}</h1>
+    <p class="subtitle">{{ client.client_id }}</p>
+
+    {% if message %}
+    <p class="{{ 'message-err' if error else 'message-ok' }}">{{ message }}</p>
+    {% endif %}
+
+    <form method="post" action="/admin/client/{{ client.client_id }}/settings">
+
+        <!-- ── 1. Client Info ───────────────────────────────────── -->
+        <section>
+            <h2>Client Info</h2>
+            <label><span>Business name</span>
+                <input type="text" name="business_name" value="{{ client.business_name }}" required>
+            </label>
+            <label><span>Address</span>
+                <input type="text" name="business_address" value="{{ client.business_address or '' }}">
+            </label>
+            <label><span>Owner email</span>
+                <input type="email" name="owner_email" value="{{ client.owner_email }}" required>
+            </label>
+        </section>
+
+        <!-- ── 2. Schedule ─────────────────────────────────────── -->
+        <section>
+            <h2>Schedule</h2>
+            <label><span>Timezone (IANA)</span>
+                <input type="text" name="timezone" value="{{ client.timezone }}" required placeholder="America/Denver">
+            </label>
+            <label><span>Working days</span></label>
+            <div class="days">
+                {% for i in range(1, 8) %}
+                <label>
+                    <input type="checkbox" name="working_days" value="{{ i }}"
+                        {% if i in client.working_days %}checked{% endif %}>
+                    {{ day_labels[i - 1] }}
+                </label>
+                {% endfor %}
+            </div>
+            <br>
+            <div class="row">
+                <label><span>Hours start</span>
+                    <input type="time" name="bh_start" value="{{ client.business_hours.start }}">
+                </label>
+                <label><span>Hours end</span>
+                    <input type="time" name="bh_end" value="{{ client.business_hours.end }}">
+                </label>
+            </div>
+            <div class="row">
+                <label><span>Slot duration (min)</span>
+                    <input type="number" name="slot_duration_minutes" value="{{ client.slot_duration_minutes }}" min="15" max="480">
+                </label>
+                <label><span>Buffer (min)</span>
+                    <input type="number" name="buffer_minutes" value="{{ client.buffer_minutes }}" min="0">
+                </label>
+                <label><span>Lead time (min)</span>
+                    <input type="number" name="lead_time_minutes" value="{{ client.lead_time_minutes }}" min="0">
+                </label>
+            </div>
+        </section>
+
+        <button type="submit">Save changes</button>
+    </form>
+
+    <!-- ── 3. Knowledge Base ───────────────────────────────────── -->
+    <section>
+        <h2>Knowledge Base</h2>
+        <p>{{ doc_count }} document{{ 's' if doc_count != 1 else '' }} ingested.
+           <a class="doc-link" href="/admin/documents?client_id={{ client.client_id }}">Manage documents →</a>
+        </p>
+    </section>
+
+    <!-- ── 4. OAuth ────────────────────────────────────────────── -->
+    <section>
+        <h2>OAuth / Google Calendar</h2>
+        {% if token %}
+            {% if token.token_expiry %}
+            <p>Token expires: {{ token.token_expiry.strftime('%Y-%m-%d %H:%M UTC') }}
+               {% if token.token_expiry < now %}<strong class="oauth-exp">(EXPIRED)</strong>{% else %}<span class="oauth-ok">(valid)</span>{% endif %}
+            </p>
+            {% else %}
+            <p class="oauth-ok">Token stored (no expiry recorded)</p>
+            {% endif %}
+        {% else %}
+            <p class="oauth-exp">No token — calendar not connected.</p>
+        {% endif %}
+        <p><a href="/oauth/start?client_id={{ client.client_id }}">Re-authorize Google Calendar →</a></p>
+    </section>
+
+    <!-- ── 5. Tools ────────────────────────────────────────────── -->
+    <section>
+        <h2>Tools</h2>
+        <button type="button" id="test-cal-btn">Test Calendar</button>
+        <div class="tool-result" id="test-cal-result"></div>
+    </section>
+
+    <script>
+    document.getElementById('test-cal-btn').addEventListener('click', async function () {
+        const btn = this;
+        const out = document.getElementById('test-cal-result');
+        btn.disabled = true;
+        btn.textContent = 'Testing\u2026';
+        out.style.display = 'none';
+        try {
+            const res = await fetch('/admin/test-calendar/{{ client.client_id }}');
+            const data = await res.json();
+            out.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+            out.textContent = 'Request failed: ' + e.message;
+        } finally {
+            out.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Test Calendar';
+        }
+    });
+    </script>
+</body>
+</html>

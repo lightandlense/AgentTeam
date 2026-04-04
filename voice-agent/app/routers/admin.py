@@ -8,16 +8,18 @@ Provides:
 
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func
 
 from app.database import get_db
-from app.models.client import Client, Embedding
+from app.models.client import Client, Embedding, OAuthToken
 from app.services.ingestion import MAX_FILE_BYTES, delete_document, ingest_document
 
 logger = logging.getLogger(__name__)
@@ -54,6 +56,58 @@ async def client_list(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse(
         "client_list.html",
         {"request": request, "clients": clients},
+    )
+
+
+_DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/client/{client_id}
+# ---------------------------------------------------------------------------
+
+
+@router.get("/client/{client_id}")
+async def client_dashboard(
+    client_id: str,
+    request: Request,
+    message: str = "",
+    error: bool = False,
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the per-client management dashboard."""
+    result = await db.execute(select(Client).where(Client.client_id == client_id))
+    client = result.scalar_one_or_none()
+    if client is None:
+        return Response("Client not found", status_code=404)
+
+    token_result = await db.execute(
+        select(OAuthToken)
+        .where(OAuthToken.client_id == client_id)
+        .order_by(OAuthToken.id.desc())
+        .limit(1)
+    )
+    token = token_result.scalar_one_or_none()
+
+    doc_result = await db.execute(
+        select(func.count(func.distinct(Embedding.doc_name))).where(
+            Embedding.client_id == client_id
+        )
+    )
+    doc_count = doc_result.scalar() or 0
+
+    return templates.TemplateResponse(
+        "client_dashboard.html",
+        {
+            "request": request,
+            "client": client,
+            "token": token,
+            "doc_count": doc_count,
+            "day_labels": _DAY_LABELS,
+            "message": message,
+            "error": error,
+            "now": datetime.now(timezone.utc),
+        },
     )
 
 

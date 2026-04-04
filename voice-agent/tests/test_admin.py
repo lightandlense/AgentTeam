@@ -261,3 +261,79 @@ async def test_delete_calls_service_and_redirects():
 
     assert response.status_code in (302, 303)
     mock_delete.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/client/{client_id}
+# ---------------------------------------------------------------------------
+
+
+def _make_dashboard_db(client, token=None, doc_count=0):
+    """Mock db for dashboard: handles 3 sequential execute() calls."""
+    mock_session = AsyncMock()
+
+    # Result 1: scalar_one_or_none() → client
+    client_result = MagicMock()
+    client_result.scalar_one_or_none.return_value = client
+
+    # Result 2: scalar_one_or_none() → token
+    token_result = MagicMock()
+    token_result.scalar_one_or_none.return_value = token
+
+    # Result 3: scalar() → doc_count
+    doc_result = MagicMock()
+    doc_result.scalar.return_value = doc_count
+
+    mock_session.execute = AsyncMock(
+        side_effect=[client_result, token_result, doc_result]
+    )
+
+    async def _override():
+        yield mock_session
+
+    return _override
+
+
+@pytest.mark.asyncio
+async def test_client_dashboard_returns_200():
+    """GET /admin/client/{id} should return 200 and show client name."""
+    from app.database import get_db
+
+    c = _mock_client(client_id="c1", business_name="HVAC Co", timezone="America/Denver")
+    app.dependency_overrides[get_db] = _make_dashboard_db(c, token=None, doc_count=2)
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get("/admin/client/c1")
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code == 200
+    assert "HVAC Co" in response.text
+    assert "America/Denver" in response.text
+
+
+@pytest.mark.asyncio
+async def test_client_dashboard_returns_404_for_unknown_client():
+    """GET /admin/client/{id} should return 404 when client not found."""
+    from app.database import get_db
+
+    client_result = MagicMock()
+    client_result.scalar_one_or_none.return_value = None
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(return_value=client_result)
+
+    async def _override():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get("/admin/client/unknown")
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code == 404
