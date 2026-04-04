@@ -95,7 +95,11 @@ Plans:
   2. Running the oauth CLI script for a client opens the Google OAuth consent flow and stores the resulting encrypted tokens
   3. Running the ingest CLI script with a client_id and file path ingests the document into that client's knowledge base
   4. The backend is accessible at a public HTTPS Railway URL and Retell can reach the webhook endpoint from the internet
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — CLI scripts: create_client.py, oauth_client.py, ingest_client.py
+- [ ] 05-02-PLAN.md — Railway deployment: Dockerfile, railway.toml, env var setup, live HTTPS verification
 
 ## Progress
 
@@ -108,4 +112,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. RAG Knowledge Base | 3/3 | Complete   | 2026-04-03 |
 | 3. Calendar Operations | 5/5 | Complete   | 2026-04-03 |
 | 4. Notifications and Edge Cases | 2/2 | Complete   | 2026-04-04 |
-| 5. Admin and Deployment | 0/TBD | Not started | - |
+| 5. Admin and Deployment | 0/2 | Not started | - |
