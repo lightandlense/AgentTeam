@@ -32,14 +32,31 @@ router = APIRouter(prefix="/retell", tags=["retell"])
 async def _get_client_meta(db: AsyncSession, client_id: str) -> tuple[str, str, str]:
     """Return (owner_email, business_name, timezone) for a client_id.
 
-    Returns ('', '', 'UTC') if client not found — email functions handle empty
-    addresses gracefully (SMTP skipped when host is empty).
+    Returns ('', '', 'UTC') on lookup failure — email functions handle empty
+    addresses gracefully (SMTP skipped when host is empty). Errors are logged
+    but never raised so DB failures do not abort webhook responses.
     """
-    result = await db.execute(select(Client).where(Client.client_id == client_id))
-    client = result.scalar_one_or_none()
-    if client is None:
+    try:
+        result = await db.execute(select(Client).where(Client.client_id == client_id))
+        client = result.scalar_one_or_none()
+        if client is None:
+            return ("", "", "UTC")
+        return (client.owner_email, client.business_name, client.timezone)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not load client meta for %s: %s", client_id, exc)
         return ("", "", "UTC")
-    return (client.owner_email, client.business_name, client.timezone)
+
+
+async def _safe_send(coro) -> None:  # type: ignore[type-arg]
+    """Await an email coroutine, swallowing any exception.
+
+    Email failures must never propagate to the Retell webhook response.
+    Errors are logged at ERROR level for observability.
+    """
+    try:
+        await coro
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Email send failed (suppressed): %s", exc)
 
 
 @router.post("/webhook")
@@ -78,13 +95,13 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 owner_email, business_name, _ = await _get_client_meta(db, client_id)
                 caller_name = args.get("caller_name", "Unknown")
                 caller_phone = args.get("caller_phone", "Unknown")
-                await send_callback_request(
+                await _safe_send(send_callback_request(
                     owner_email=owner_email,
                     business_name=business_name,
                     caller_name=caller_name,
                     caller_phone=caller_phone,
                     reason="no_slot_found",
-                )
+                ))
             else:
                 result = {"slots": [s.isoformat() for s in slots]}
         except (AppointmentError, CalendarError) as exc:
@@ -111,17 +128,17 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                     "event_id": booking.event_id,
                     "slot": booking.slot.isoformat(),
                 }
-                # Send notifications (fire-and-forget; errors are logged, never raised)
+                # Send notifications (fire-and-forget via _safe_send; errors logged, never raised)
                 owner_email, business_name, tz = await _get_client_meta(db, client_id)
-                await send_caller_confirmation(
+                await _safe_send(send_caller_confirmation(
                     caller_email=booking_req.email,
                     caller_name=booking_req.name,
                     business_name=business_name,
                     action="booked",
                     appointment_dt=booking.slot,
                     business_timezone=tz,
-                )
-                await send_owner_alert(
+                ))
+                await _safe_send(send_owner_alert(
                     owner_email=owner_email,
                     business_name=business_name,
                     action="booked",
@@ -130,7 +147,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                     caller_email=booking_req.email,
                     appointment_dt=booking.slot,
                     business_timezone=tz,
-                )
+                ))
             else:
                 result = {
                     "confirmed": False,
@@ -152,13 +169,13 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 owner_email, business_name, _ = await _get_client_meta(db, client_id)
                 caller_name = args.get("caller_name", "Unknown")
                 caller_phone = args.get("caller_phone", "Unknown")
-                await send_callback_request(
+                await _safe_send(send_callback_request(
                     owner_email=owner_email,
                     business_name=business_name,
                     caller_name=caller_name,
                     caller_phone=caller_phone,
                     reason="no_slot_found",
-                )
+                ))
         except AppointmentError as exc:
             logger.exception("AppointmentError in find_slot_in_window: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
@@ -178,15 +195,15 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             caller_name = args.get("name", "")
             caller_phone = args.get("phone", "")
             caller_email_addr = args.get("email", "")
-            await send_caller_confirmation(
+            await _safe_send(send_caller_confirmation(
                 caller_email=caller_email_addr,
                 caller_name=caller_name,
                 business_name=business_name,
                 action="rescheduled",
                 appointment_dt=new_start_dt,
                 business_timezone=tz,
-            )
-            await send_owner_alert(
+            ))
+            await _safe_send(send_owner_alert(
                 owner_email=owner_email,
                 business_name=business_name,
                 action="rescheduled",
@@ -195,7 +212,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 caller_email=caller_email_addr,
                 appointment_dt=new_start_dt,
                 business_timezone=tz,
-            )
+            ))
         except AppointmentError as exc:
             logger.exception("AppointmentError in reschedule_appointment: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
@@ -211,15 +228,15 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             caller_name = args.get("name", "")
             caller_phone = args.get("phone", "")
             caller_email_addr = args.get("email", "")
-            await send_caller_confirmation(
+            await _safe_send(send_caller_confirmation(
                 caller_email=caller_email_addr,
                 caller_name=caller_name,
                 business_name=business_name,
                 action="cancelled",
                 appointment_dt=None,
                 business_timezone=tz,
-            )
-            await send_owner_alert(
+            ))
+            await _safe_send(send_owner_alert(
                 owner_email=owner_email,
                 business_name=business_name,
                 action="cancelled",
@@ -228,7 +245,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 caller_email=caller_email_addr,
                 appointment_dt=None,
                 business_timezone=tz,
-            )
+            ))
         except AppointmentError as exc:
             logger.exception("AppointmentError in cancel_appointment: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
@@ -266,13 +283,13 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         caller_name = args.get("caller_name", "Unknown")
         caller_phone = args.get("caller_phone", "Unknown")
         owner_email, business_name, _ = await _get_client_meta(db, client_id)
-        await send_callback_request(
+        await _safe_send(send_callback_request(
             owner_email=owner_email,
             business_name=business_name,
             caller_name=caller_name,
             caller_phone=caller_phone,
             reason="caller_requested",
-        )
+        ))
         return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
 
     # Unknown tool — acknowledge without crashing
