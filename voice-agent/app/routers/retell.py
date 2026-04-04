@@ -113,14 +113,16 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     elif tool_name == "book_appointment":
         try:
             client_id = args.get("client_id", "")
-            requested_slot = datetime.fromisoformat(args.get("requested_slot"))
+            # Support both Retell field names (caller_name/slot) and internal names
+            slot_str = args.get("slot") or args.get("requested_slot")
+            requested_slot = datetime.fromisoformat(slot_str)
             booking_req = BookingRequest(
-                name=args.get("name", ""),
-                phone=args.get("phone", ""),
-                email=args.get("email", ""),
-                address=args.get("address", ""),
-                problem_description=args.get("problem_description", ""),
-                access_notes=args.get("access_notes", ""),
+                name=args.get("caller_name") or args.get("name", ""),
+                phone=args.get("caller_phone") or args.get("phone", ""),
+                email=args.get("caller_email") or args.get("email", ""),
+                address=args.get("caller_address") or args.get("address", ""),
+                problem_description=args.get("summary") or args.get("problem_description", ""),
+                access_notes=args.get("property_notes") or args.get("access_notes", ""),
             )
             booking = await book_appointment(db, client_id, requested_slot, booking_req)
             if booking.confirmed:
