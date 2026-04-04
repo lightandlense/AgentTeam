@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.config import get_settings
 
@@ -19,7 +20,7 @@ def _make_engine():
     return create_async_engine(
         settings.database_url,
         echo=False,
-        pool_pre_ping=True,
+        poolclass=NullPool,
     )
 
 

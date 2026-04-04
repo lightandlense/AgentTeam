@@ -59,10 +59,14 @@ async def get_calendar_service(db: AsyncSession, client_id: str):  # noqa: ANN20
         access_token = decrypt_token(token_row.encrypted_access_token, settings.encryption_key)
         refresh_token = decrypt_token(token_row.encrypted_refresh_token, settings.encryption_key)
 
+        expiry = token_row.token_expiry
+        if expiry is not None and expiry.tzinfo is not None:
+            expiry = expiry.replace(tzinfo=None)
+
         credentials = google.oauth2.credentials.Credentials(
             token=access_token,
             refresh_token=refresh_token,
-            expiry=token_row.token_expiry,
+            expiry=expiry,
             client_id=settings.google_client_id,
             client_secret=settings.google_client_secret,
             token_uri="https://oauth2.googleapis.com/token",
