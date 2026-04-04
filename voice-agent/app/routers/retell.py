@@ -2,9 +2,11 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.client import Client
 from app.services.appointment import (
     AppointmentError,
     BookingRequest,
@@ -15,11 +17,29 @@ from app.services.appointment import (
     reschedule_appointment,
 )
 from app.services.calendar import CalendarError, get_free_slots
+from app.services.email import (
+    send_callback_request,
+    send_caller_confirmation,
+    send_owner_alert,
+)
 from app.services.rag import TRANSFER_SENTINEL, answer_question
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/retell", tags=["retell"])
+
+
+async def _get_client_meta(db: AsyncSession, client_id: str) -> tuple[str, str, str]:
+    """Return (owner_email, business_name, timezone) for a client_id.
+
+    Returns ('', '', 'UTC') if client not found — email functions handle empty
+    addresses gracefully (SMTP skipped when host is empty).
+    """
+    result = await db.execute(select(Client).where(Client.client_id == client_id))
+    client = result.scalar_one_or_none()
+    if client is None:
+        return ("", "", "UTC")
+    return (client.owner_email, client.business_name, client.timezone)
 
 
 @router.post("/webhook")
@@ -29,6 +49,7 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     Handles tool_call events by dispatching to the appropriate service.
     Non-tool events are acknowledged with a generic received status.
     AppointmentError from any calendar tool returns TRANSFER_SENTINEL.
+    Email failures never change the HTTP response returned to Retell.
     """
     body = await request.json()
 
@@ -54,6 +75,16 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             slots = await get_free_slots(db, client_id, window_start, window_end, max_slots=3)
             if not slots:
                 result = TRANSFER_SENTINEL
+                owner_email, business_name, _ = await _get_client_meta(db, client_id)
+                caller_name = args.get("caller_name", "Unknown")
+                caller_phone = args.get("caller_phone", "Unknown")
+                await send_callback_request(
+                    owner_email=owner_email,
+                    business_name=business_name,
+                    caller_name=caller_name,
+                    caller_phone=caller_phone,
+                    reason="no_slot_found",
+                )
             else:
                 result = {"slots": [s.isoformat() for s in slots]}
         except (AppointmentError, CalendarError) as exc:
@@ -80,6 +111,26 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                     "event_id": booking.event_id,
                     "slot": booking.slot.isoformat(),
                 }
+                # Send notifications (fire-and-forget; errors are logged, never raised)
+                owner_email, business_name, tz = await _get_client_meta(db, client_id)
+                await send_caller_confirmation(
+                    caller_email=booking_req.email,
+                    caller_name=booking_req.name,
+                    business_name=business_name,
+                    action="booked",
+                    appointment_dt=booking.slot,
+                    business_timezone=tz,
+                )
+                await send_owner_alert(
+                    owner_email=owner_email,
+                    business_name=business_name,
+                    action="booked",
+                    caller_name=booking_req.name,
+                    caller_phone=booking_req.phone,
+                    caller_email=booking_req.email,
+                    appointment_dt=booking.slot,
+                    business_timezone=tz,
+                )
             else:
                 result = {
                     "confirmed": False,
@@ -97,6 +148,17 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             window_end = datetime.fromisoformat(args.get("window_end"))
             slots = await find_slot_in_window(db, client_id, window_start, window_end)
             result = {"slots": [s.isoformat() for s in slots]} if slots else TRANSFER_SENTINEL
+            if not slots:
+                owner_email, business_name, _ = await _get_client_meta(db, client_id)
+                caller_name = args.get("caller_name", "Unknown")
+                caller_phone = args.get("caller_phone", "Unknown")
+                await send_callback_request(
+                    owner_email=owner_email,
+                    business_name=business_name,
+                    caller_name=caller_name,
+                    caller_phone=caller_phone,
+                    reason="no_slot_found",
+                )
         except AppointmentError as exc:
             logger.exception("AppointmentError in find_slot_in_window: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
@@ -112,6 +174,28 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 db, client_id, event_id, new_start_dt, slot_duration
             )
             result = {"confirmed": True, "event_id": event_id_out}
+            owner_email, business_name, tz = await _get_client_meta(db, client_id)
+            caller_name = args.get("name", "")
+            caller_phone = args.get("phone", "")
+            caller_email_addr = args.get("email", "")
+            await send_caller_confirmation(
+                caller_email=caller_email_addr,
+                caller_name=caller_name,
+                business_name=business_name,
+                action="rescheduled",
+                appointment_dt=new_start_dt,
+                business_timezone=tz,
+            )
+            await send_owner_alert(
+                owner_email=owner_email,
+                business_name=business_name,
+                action="rescheduled",
+                caller_name=caller_name,
+                caller_phone=caller_phone,
+                caller_email=caller_email_addr,
+                appointment_dt=new_start_dt,
+                business_timezone=tz,
+            )
         except AppointmentError as exc:
             logger.exception("AppointmentError in reschedule_appointment: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
@@ -123,6 +207,28 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             event_id = args.get("event_id", "")
             await cancel_appointment(db, client_id, event_id)
             result = {"confirmed": True}
+            owner_email, business_name, tz = await _get_client_meta(db, client_id)
+            caller_name = args.get("name", "")
+            caller_phone = args.get("phone", "")
+            caller_email_addr = args.get("email", "")
+            await send_caller_confirmation(
+                caller_email=caller_email_addr,
+                caller_name=caller_name,
+                business_name=business_name,
+                action="cancelled",
+                appointment_dt=None,
+                business_timezone=tz,
+            )
+            await send_owner_alert(
+                owner_email=owner_email,
+                business_name=business_name,
+                action="cancelled",
+                caller_name=caller_name,
+                caller_phone=caller_phone,
+                caller_email=caller_email_addr,
+                appointment_dt=None,
+                business_timezone=tz,
+            )
         except AppointmentError as exc:
             logger.exception("AppointmentError in cancel_appointment: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
@@ -153,6 +259,21 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             logger.exception("AppointmentError in find_appointment: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
         return {"tool_call_id": tool_call_id, "result": result}
+
+    elif tool_name == "request_callback":
+        # Caller explicitly requested to speak to a human (VOICE-03)
+        client_id = args.get("client_id", "")
+        caller_name = args.get("caller_name", "Unknown")
+        caller_phone = args.get("caller_phone", "Unknown")
+        owner_email, business_name, _ = await _get_client_meta(db, client_id)
+        await send_callback_request(
+            owner_email=owner_email,
+            business_name=business_name,
+            caller_name=caller_name,
+            caller_phone=caller_phone,
+            reason="caller_requested",
+        )
+        return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
 
     # Unknown tool — acknowledge without crashing
     return {"tool_call_id": tool_call_id, "result": "not_implemented"}
