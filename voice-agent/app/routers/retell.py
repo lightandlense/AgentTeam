@@ -31,58 +31,126 @@ router = APIRouter(prefix="/retell", tags=["retell"])
 
 
 async def _get_client_meta(db: AsyncSession, client_id: str) -> tuple[str, str, str]:
-    """Return (owner_email, business_name, timezone) for a client_id.
-
-    Returns ('', '', 'UTC') on lookup failure — email functions handle empty
-    addresses gracefully (SMTP skipped when host is empty). Errors are logged
-    but never raised so DB failures do not abort webhook responses.
-    """
+    """Return (owner_email, business_name, timezone) for a client_id."""
     try:
         result = await db.execute(select(Client).where(Client.client_id == client_id))
         client = result.scalar_one_or_none()
         if client is None:
             return ("", "", "UTC")
         return (client.owner_email, client.business_name, client.timezone)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Could not load client meta for %s: %s", client_id, exc)
         return ("", "", "UTC")
 
 
-async def _safe_send(coro) -> None:  # type: ignore[type-arg]
-    """Await an email coroutine, swallowing any exception.
-
-    Email failures must never propagate to the Retell webhook response.
-    Errors are logged at ERROR level for observability.
-    """
+async def _safe_send(coro) -> None:
+    """Await an email coroutine, swallowing any exception."""
     try:
         await coro
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.error("Email send failed (suppressed): %s", exc)
 
 
+def _args_from_body(body: dict) -> dict:
+    """Extract tool arguments from either Simple Prompt or Conversation Flow format.
+
+    Simple Prompt: body = {event, name, tool_call_id, arguments: {...}}
+    Conversation Flow: body = {tool_call_id, param1, param2, ...}
+    """
+    if "arguments" in body:
+        return body.get("arguments", {})
+    # Conversation Flow — params are at top level; exclude meta keys
+    return {k: v for k, v in body.items() if k not in ("tool_call_id",)}
+
+
+# ---------------------------------------------------------------------------
+# Shared dispatcher (Simple Prompt agents)
+# ---------------------------------------------------------------------------
+
 @router.post("/webhook")
 async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    """Entry point for all Retell tool calls.
-
-    Handles tool_call events by dispatching to the appropriate service.
-    Non-tool events are acknowledged with a generic received status.
-    AppointmentError from any calendar tool returns TRANSFER_SENTINEL.
-    Email failures never change the HTTP response returned to Retell.
-    """
+    """Entry point for Simple Prompt tool calls (event-based dispatch)."""
     body = await request.json()
 
-    # DEBUG: log full body to Railway stdout so we can see Retell's exact format
-    import json as _json
-    print("RETELL_WEBHOOK_BODY:", _json.dumps(body), flush=True)
+    event = body.get("event")
 
-    # Only handle tool_call events; ignore others (e.g. call_started, call_ended)
-    if body.get("event") != "tool_call":
-        print("RETELL_WEBHOOK_IGNORED_EVENT:", body.get("event"), flush=True)
+    # Non-tool events from Simple Prompt agents
+    if event and event != "tool_call":
         return {"status": "received"}
 
     tool_name = body.get("name")
     tool_call_id = body.get("tool_call_id", "")
-    args = body.get("arguments", {})
+    args = _args_from_body(body)
+
+    return await _dispatch(tool_name, tool_call_id, args, db)
+
+
+# ---------------------------------------------------------------------------
+# Per-tool endpoints (Conversation Flow nodes)
+# ---------------------------------------------------------------------------
+
+@router.post("/check_availability")
+async def retell_check_availability(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("check_availability", tool_call_id, args, db)
+
+
+@router.post("/book_appointment")
+async def retell_book_appointment(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("book_appointment", tool_call_id, args, db)
+
+
+@router.post("/find_appointment")
+async def retell_find_appointment(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("find_appointment", tool_call_id, args, db)
+
+
+@router.post("/reschedule_appointment")
+async def retell_reschedule_appointment(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("reschedule_appointment", tool_call_id, args, db)
+
+
+@router.post("/cancel_appointment")
+async def retell_cancel_appointment(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("cancel_appointment", tool_call_id, args, db)
+
+
+@router.post("/answer_question")
+async def retell_answer_question(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("answer_question", tool_call_id, args, db)
+
+
+@router.post("/request_callback")
+async def retell_request_callback(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.json()
+    tool_call_id = body.get("tool_call_id", "")
+    args = _args_from_body(body)
+    return await _dispatch("request_callback", tool_call_id, args, db)
+
+
+# ---------------------------------------------------------------------------
+# Core dispatcher
+# ---------------------------------------------------------------------------
+
+async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSession) -> dict:
+    """Route a tool call to the appropriate handler."""
 
     if tool_name == "answer_question":
         client_id = args.get("client_id", "")
@@ -113,12 +181,14 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         except (AppointmentError, CalendarError) as exc:
             logger.exception("CalendarError/AppointmentError in check_availability: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
+        except Exception as exc:
+            logger.exception("Unexpected error in check_availability: %s", exc)
+            return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
         return {"tool_call_id": tool_call_id, "result": result}
 
     elif tool_name == "book_appointment":
         try:
             client_id = args.get("client_id", "")
-            # Support both Retell field names (caller_name/slot) and internal names
             slot_str = args.get("slot") or args.get("requested_slot")
             requested_slot = datetime.fromisoformat(slot_str)
             booking_req = BookingRequest(
@@ -136,7 +206,6 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                     "event_id": booking.event_id,
                     "slot": booking.slot.isoformat(),
                 }
-                # Send notifications (fire-and-forget via _safe_send; errors logged, never raised)
                 owner_email, business_name, tz = await _get_client_meta(db, client_id)
                 await _safe_send(send_caller_confirmation(
                     caller_email=booking_req.email,
@@ -163,6 +232,9 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 }
         except AppointmentError as exc:
             logger.exception("AppointmentError in book_appointment: %s", exc)
+            return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
+        except Exception as exc:
+            logger.exception("Unexpected error in book_appointment: %s", exc)
             return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
         return {"tool_call_id": tool_call_id, "result": result}
 
@@ -200,9 +272,9 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             )
             result = {"confirmed": True, "event_id": event_id_out}
             owner_email, business_name, tz = await _get_client_meta(db, client_id)
-            caller_name = args.get("name", "")
-            caller_phone = args.get("phone", "")
-            caller_email_addr = args.get("email", "")
+            caller_name = args.get("caller_name") or args.get("name", "")
+            caller_phone = args.get("caller_phone") or args.get("phone", "")
+            caller_email_addr = args.get("caller_email") or args.get("email", "")
             await _safe_send(send_caller_confirmation(
                 caller_email=caller_email_addr,
                 caller_name=caller_name,
@@ -233,9 +305,9 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             await cancel_appointment(db, client_id, event_id)
             result = {"confirmed": True}
             owner_email, business_name, tz = await _get_client_meta(db, client_id)
-            caller_name = args.get("name", "")
-            caller_phone = args.get("phone", "")
-            caller_email_addr = args.get("email", "")
+            caller_name = args.get("caller_name") or args.get("name", "")
+            caller_phone = args.get("caller_phone") or args.get("phone", "")
+            caller_email_addr = args.get("caller_email") or args.get("email", "")
             await _safe_send(send_caller_confirmation(
                 caller_email=caller_email_addr,
                 caller_name=caller_name,
@@ -266,7 +338,6 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             caller_name = args.get("caller_name", "")
             appointment_date = args.get("appointment_date", "")
 
-            # Phone lookup is preferred — unambiguous even with duplicate names
             if caller_phone:
                 matches = await find_appointment_by_phone(db, client_id, caller_phone)
             else:
@@ -296,7 +367,6 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         return {"tool_call_id": tool_call_id, "result": result}
 
     elif tool_name == "request_callback":
-        # Caller explicitly requested to speak to a human (VOICE-03)
         client_id = args.get("client_id", "")
         caller_name = args.get("caller_name", "Unknown")
         caller_phone = args.get("caller_phone", "Unknown")
@@ -310,5 +380,4 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         ))
         return {"tool_call_id": tool_call_id, "result": TRANSFER_SENTINEL}
 
-    # Unknown tool — acknowledge without crashing
     return {"tool_call_id": tool_call_id, "result": "not_implemented"}
