@@ -6,11 +6,10 @@ never raised. The webhook response is never blocked by email failures.
 """
 import logging
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from zoneinfo import ZoneInfo
 
-import aiosmtplib
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 from app.config import get_settings
 
@@ -26,26 +25,24 @@ _REASON_LABELS: dict[str, str] = {
 
 
 async def _send(to_address: str, subject: str, body: str) -> None:
-    """Internal helper: compose and send a plain-text email via SMTP."""
+    """Internal helper: send a plain-text email via SendGrid HTTP API."""
     settings = get_settings()
-    if not settings.smtp_host:
-        logger.debug("SMTP not configured; skipping email to %s", to_address)
+    if not settings.smtp_password:
+        logger.debug("SendGrid API key not configured; skipping email to %s", to_address)
+        return
+    if not to_address:
+        logger.debug("No recipient address; skipping email")
         return
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = settings.smtp_from_address
-        msg["To"] = to_address
-        msg.attach(MIMEText(body, "plain"))
-        await aiosmtplib.send(
-            msg,
-            hostname=settings.smtp_host,
-            port=settings.smtp_port,
-            username=settings.smtp_user,
-            password=settings.smtp_password,
-            start_tls=True,
+        message = Mail(
+            from_email=settings.smtp_from_address,
+            to_emails=to_address,
+            subject=subject,
+            plain_text_content=body,
         )
-        logger.info("Email sent to %s: %s", to_address, subject)
+        sg = SendGridAPIClient(settings.smtp_password)
+        response = sg.send(message)
+        logger.info("Email sent to %s: %s (status %s)", to_address, subject, response.status_code)
     except Exception as exc:
         logger.error("Failed to send email to %s: %s", to_address, exc)
 
@@ -64,16 +61,7 @@ async def send_caller_confirmation(
     appointment_dt: datetime | None,
     business_timezone: str,
 ) -> None:
-    """Send appointment confirmation to the caller.
-
-    Args:
-        caller_email: Recipient email address.
-        caller_name: Caller's name for personalisation.
-        business_name: Name of the business.
-        action: One of "booked", "rescheduled", "cancelled".
-        appointment_dt: Scheduled datetime (None for cancellations).
-        business_timezone: IANA timezone string, e.g. "America/New_York".
-    """
+    """Send appointment confirmation to the caller."""
     subject = f"Your appointment at {business_name} — {action}"
 
     dt_line = ""
@@ -102,20 +90,7 @@ async def send_owner_alert(
     caller_address: str = "",
     problem_description: str = "",
 ) -> None:
-    """Send appointment action alert to the business owner.
-
-    Args:
-        owner_email: Business owner's email address.
-        business_name: Name of the business.
-        action: One of "booked", "rescheduled", "cancelled".
-        caller_name: Caller's full name.
-        caller_phone: Caller's phone number.
-        caller_email: Caller's email address.
-        appointment_dt: Scheduled datetime (None when not relevant).
-        business_timezone: IANA timezone string.
-        caller_address: Caller's service address (optional).
-        problem_description: Summary of the issue (optional).
-    """
+    """Send appointment action alert to the business owner."""
     subject = f"[Voice Agent] Appointment {action} — {caller_name}"
 
     dt_line = ""
@@ -146,15 +121,7 @@ async def send_callback_request(
     caller_phone: str,
     reason: str,
 ) -> None:
-    """Send callback request to the business owner when agent cannot help.
-
-    Args:
-        owner_email: Business owner's email address.
-        business_name: Name of the business.
-        caller_name: Caller's full name.
-        caller_phone: Caller's phone number.
-        reason: One of "no_slot_found", "cannot_understand", "caller_requested".
-    """
+    """Send callback request to the business owner when agent cannot help."""
     subject = f"[Voice Agent] Callback requested — {caller_name}"
     reason_label = _REASON_LABELS.get(reason, reason)
 
