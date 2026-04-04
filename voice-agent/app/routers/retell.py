@@ -149,6 +149,10 @@ _rc_get, _rc_post = _tool_route("request_callback")
 router.add_api_route("/request_callback", _rc_get, methods=["GET"])
 router.add_api_route("/request_callback", _rc_post, methods=["POST"])
 
+_gd_get, _gd_post = _tool_route("get_current_date")
+router.add_api_route("/get_current_date", _gd_get, methods=["GET"])
+router.add_api_route("/get_current_date", _gd_post, methods=["POST"])
+
 
 # ---------------------------------------------------------------------------
 # Core dispatcher
@@ -157,7 +161,18 @@ router.add_api_route("/request_callback", _rc_post, methods=["POST"])
 async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSession) -> dict:
     """Route a tool call to the appropriate handler."""
 
-    if tool_name == "answer_question":
+    if tool_name == "get_current_date":
+        now = datetime.now()
+        return {
+            "tool_call_id": tool_call_id,
+            "result": {
+                "date": now.strftime("%Y-%m-%d"),
+                "day_of_week": now.strftime("%A"),
+                "datetime": now.isoformat(),
+            },
+        }
+
+    elif tool_name == "answer_question":
         client_id = args.get("client_id", "")
         question = args.get("question", "")
         result = await answer_question(db, client_id, question)
