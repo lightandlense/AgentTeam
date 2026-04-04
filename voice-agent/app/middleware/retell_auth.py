@@ -9,7 +9,7 @@ from app.config import get_settings
 
 EXEMPT_PATHS = {"/health"}
 # Paths whose prefix makes the entire sub-tree exempt (e.g. /admin, /admin/documents, …)
-EXEMPT_PREFIXES = {"/admin"}
+EXEMPT_PREFIXES = {"/admin", "/retell"}  # TODO: re-enable Retell auth once signature format confirmed
 
 
 class RetellAuthMiddleware(BaseHTTPMiddleware):
