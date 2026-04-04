@@ -80,7 +80,11 @@ Plans:
   2. After any appointment action, an email notification is delivered to the business owner containing the caller's details and the action taken
   3. When the agent cannot find an available slot or cannot understand the caller after 2 attempts, a callback request email is sent to the business owner
   4. A caller who explicitly requests to speak to someone triggers the callback escalation path rather than the agent continuing to retry
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Email notification service: SMTP config, 3 async send functions (caller confirmation, owner alert, callback request)
+- [ ] 04-02-PLAN.md — Retell webhook wiring: email calls after book/reschedule/cancel, callback on no-slot, request_callback tool + tests
 
 ### Phase 5: Admin and Deployment
 **Goal**: The system is live on a public HTTPS URL and Russell can onboard a new client, run their OAuth flow, and ingest their knowledge base entirely via CLI scripts
@@ -103,5 +107,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 3/3 | Complete   | 2026-04-03 |
 | 2. RAG Knowledge Base | 3/3 | Complete   | 2026-04-03 |
 | 3. Calendar Operations | 5/5 | Complete   | 2026-04-03 |
-| 4. Notifications and Edge Cases | 0/TBD | Not started | - |
+| 4. Notifications and Edge Cases | 0/2 | Not started | - |
 | 5. Admin and Deployment | 0/TBD | Not started | - |
