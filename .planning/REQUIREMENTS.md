@@ -9,7 +9,7 @@
 
 - [x] **VOICE-01**: Inbound calls answered via Retell AI agent linked to a Twilio phone number
 - [x] **VOICE-02**: Retell webhook calls verified via HMAC signature before processing
-- [ ] **VOICE-03**: Caller can escalate to callback request if agent cannot help after 2 attempts
+- [x] **VOICE-03**: Caller can escalate to callback request if agent cannot help after 2 attempts
 
 ### Appointment Management
 
@@ -29,9 +29,9 @@
 
 ### Notifications
 
-- [ ] **NOTIF-01**: Email confirmation sent to caller after successful booking, reschedule, or cancellation
-- [ ] **NOTIF-02**: Email notification sent to business owner after every appointment action (caller details + action taken)
-- [ ] **NOTIF-03**: Email callback request sent to business owner when no slot found or caller cannot be understood
+- [x] **NOTIF-01**: Email confirmation sent to caller after successful booking, reschedule, or cancellation
+- [x] **NOTIF-02**: Email notification sent to business owner after every appointment action (caller details + action taken)
+- [x] **NOTIF-03**: Email callback request sent to business owner when no slot found or caller cannot be understood
 
 ### Multi-Tenant Client Management
 
@@ -81,7 +81,7 @@
 |-------------|-------|--------|
 | VOICE-01 | Phase 1 | Complete |
 | VOICE-02 | Phase 1 | Complete |
-| VOICE-03 | Phase 4 | Pending |
+| VOICE-03 | Phase 4 | Complete |
 | APPT-01 | Phase 3 | Complete |
 | APPT-02 | Phase 3 | Complete |
 | APPT-03 | Phase 3 | Complete |
@@ -92,9 +92,9 @@
 | RAG-02 | Phase 2 | Complete |
 | RAG-03 | Phase 2 | Complete |
 | RAG-04 | Phase 2 | Complete |
-| NOTIF-01 | Phase 4 | Pending |
-| NOTIF-02 | Phase 4 | Pending |
-| NOTIF-03 | Phase 4 | Pending |
+| NOTIF-01 | Phase 4 | Complete |
+| NOTIF-02 | Phase 4 | Complete |
+| NOTIF-03 | Phase 4 | Complete |
 | TENANT-01 | Phase 1 | Complete |
 | TENANT-02 | Phase 1 | Complete |
 | TENANT-03 | Phase 5 | Pending |
