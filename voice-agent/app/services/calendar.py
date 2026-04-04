@@ -204,6 +204,7 @@ async def create_event(
     end_dt: datetime,
     summary: str,
     description: str,
+    attendee_email: str = "",
 ) -> str:
     """Create a Google Calendar event and return the event ID."""
     try:
@@ -218,7 +219,13 @@ async def create_event(
             "start": {"dateTime": start_dt.isoformat(), "timeZone": tz_name},
             "end": {"dateTime": end_dt.isoformat(), "timeZone": tz_name},
         }
-        event = service.events().insert(calendarId="primary", body=event_body).execute()
+        if attendee_email:
+            event_body["attendees"] = [{"email": attendee_email}]
+        event = service.events().insert(
+            calendarId="primary",
+            body=event_body,
+            sendUpdates="all",
+        ).execute()
         return event["id"]
     except CalendarError:
         raise

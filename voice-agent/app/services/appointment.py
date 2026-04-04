@@ -131,6 +131,7 @@ async def book_appointment(
                 end_dt,
                 summary=summary,
                 description=description,
+                attendee_email=booking_request.email,
             )
             db.add(Appointment(
                 client_id=client_id,
