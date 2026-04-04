@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-04-03T19:37:25.805Z"
+last_updated: "2026-04-04T05:32:08.357Z"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** A caller can phone a local business, book or change an appointment, and get answers to their questions — entirely handled by AI with no human staff required.
-**Current focus:** Phase 3 — Calendar Operations
+**Current focus:** Phase 4 — Notifications and Edge Cases
 
 ## Current Position
 
-Phase: 3 of 5 (Calendar Operations)
-Plan: 4 of 4 in current phase (03-04 complete — phase complete)
-Status: Phase 3 complete
-Last activity: 2026-04-03 — Plan 03-05 complete: CalendarError bug fix and datetime type fix, 14 tests in test_retell_calendar.py, 66 total passing
+Phase: 4 of 5 (Notifications and Edge Cases)
+Plan: 1 of 2 in current phase (04-01 complete)
+Status: Phase 4 in progress
+Last activity: 2026-04-04 — Plan 04-01 complete: async email notification service with 3 public functions (send_caller_confirmation, send_owner_alert, send_callback_request)
 
-Progress: [██████████] 100%
+Progress: [████████████] 92% (12/13 plans)
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [██████████] 100%
 | Phase 03-calendar-operations P03 | 2 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P04 | 3 | 2 tasks | 2 files |
 | Phase 03-calendar-operations P05 | 3 | 2 tasks | 2 files |
+| Phase 04-notifications-and-edge-cases P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [Phase 03-04]: AppointmentError on any calendar branch returns TRANSFER_SENTINEL (not 500)
 - [Phase 03-calendar-operations]: CalendarError added to except tuple in check_availability — CalendarError raised directly by get_free_slots (not wrapped in AppointmentError), must be caught at call site
 - [Phase 03-calendar-operations]: find_appointment receives datetime — .date() conversion caused TypeError; appointment service expects datetime for comparison
+- [Phase 04-notifications-and-edge-cases]: SMTP fields default to empty string so app starts without crashing when SMTP not configured
+- [Phase 04-notifications-and-edge-cases]: Fire-and-forget email pattern: catch Exception, log error, never raise — webhook must always return
+- [Phase 04-notifications-and-edge-cases]: get_settings() called inside each email function (not module level) to avoid lru_cache issues in tests
 
 ### Pending Todos
 
@@ -108,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03
-Stopped at: Completed 03-05-PLAN.md — CalendarError bug fix and datetime type fix, 14 tests in test_retell_calendar.py, 66 total passing
+Last session: 2026-04-04
+Stopped at: Completed 04-01-PLAN.md — async email notification service with send_caller_confirmation, send_owner_alert, send_callback_request
 Resume file: None
