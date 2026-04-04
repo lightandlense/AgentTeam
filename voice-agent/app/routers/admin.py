@@ -14,7 +14,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
@@ -258,7 +258,6 @@ async def delete_document_route(
 @router.get("/test-calendar/{client_id}")
 async def test_calendar(client_id: str, db: AsyncSession = Depends(get_db)):
     """Debug endpoint: test Google Calendar connectivity for a client."""
-    from datetime import datetime, timedelta
     from app.services.calendar import get_free_slots, CalendarError
     try:
         now = datetime.now()

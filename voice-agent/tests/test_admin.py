@@ -312,6 +312,8 @@ async def test_client_dashboard_returns_200():
     assert response.status_code == 200
     assert "HVAC Co" in response.text
     assert "America/Denver" in response.text
+    assert "2 document" in response.text   # doc_count=2 is rendered
+    assert "No token" in response.text      # token=None renders the no-token message
 
 
 @pytest.mark.asyncio
