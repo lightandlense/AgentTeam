@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models.client import Client, Embedding, OAuthToken
+from app.models.client import Client, Embedding
 from app.services.ingestion import MAX_FILE_BYTES, delete_document, ingest_document
 
 logger = logging.getLogger(__name__)

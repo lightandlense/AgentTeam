@@ -56,7 +56,6 @@ def _mock_client(
     business_address="123 Main St",
     owner_email="owner@test.com",
 ):
-    from unittest.mock import MagicMock
     c = MagicMock()
     c.client_id = client_id
     c.business_name = business_name
@@ -125,6 +124,7 @@ async def test_client_list_empty():
         app.dependency_overrides.pop(get_db, None)
 
     assert response.status_code == 200
+    assert "No clients found" in response.text
 
 
 # ---------------------------------------------------------------------------
