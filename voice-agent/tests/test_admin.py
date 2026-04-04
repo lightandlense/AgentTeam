@@ -339,3 +339,84 @@ async def test_client_dashboard_returns_404_for_unknown_client():
         app.dependency_overrides.pop(get_db, None)
 
     assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# POST /admin/client/{client_id}/settings
+# ---------------------------------------------------------------------------
+
+
+def _make_update_db(client):
+    """Mock db for settings POST: execute returns client, commit is a no-op."""
+    mock_session = AsyncMock()
+    client_result = MagicMock()
+    client_result.scalar_one_or_none.return_value = client
+    mock_session.execute = AsyncMock(return_value=client_result)
+    mock_session.commit = AsyncMock()
+
+    async def _override():
+        yield mock_session
+
+    return _override
+
+
+@pytest.mark.asyncio
+async def test_settings_post_redirects_on_success():
+    """POST /admin/client/{id}/settings should save and redirect to dashboard."""
+    from app.database import get_db
+
+    c = _mock_client(client_id="c1")
+    app.dependency_overrides[get_db] = _make_update_db(c)
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test",
+            follow_redirects=False,
+        ) as client:
+            response = await client.post(
+                "/admin/client/c1/settings",
+                data={
+                    "business_name": "New Name",
+                    "owner_email": "new@test.com",
+                    "timezone": "America/Chicago",
+                    "working_days": ["1", "2", "3", "4", "5", "6", "7"],
+                    "bh_start": "08:00",
+                    "bh_end": "18:00",
+                    "slot_duration_minutes": "90",
+                    "buffer_minutes": "15",
+                    "lead_time_minutes": "120",
+                },
+            )
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code in (302, 303)
+    assert "/admin/client/c1" in response.headers.get("location", "")
+
+
+@pytest.mark.asyncio
+async def test_settings_post_404_for_unknown_client():
+    """POST to unknown client_id should return 404."""
+    from app.database import get_db
+
+    client_result = MagicMock()
+    client_result.scalar_one_or_none.return_value = None
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(return_value=client_result)
+
+    async def _override():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/admin/client/unknown/settings",
+                data={"business_name": "X", "owner_email": "x@x.com", "timezone": "UTC"},
+            )
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code == 404

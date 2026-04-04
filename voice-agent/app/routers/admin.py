@@ -255,6 +255,63 @@ async def delete_document_route(
     return RedirectResponse(url=redirect_url, status_code=303)
 
 
+@router.post("/client/{client_id}/settings")
+async def update_client_settings(
+    client_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Save client info and schedule changes."""
+    form = await request.form()
+
+    result = await db.execute(select(Client).where(Client.client_id == client_id))
+    client = result.scalar_one_or_none()
+    if client is None:
+        return Response("Client not found", status_code=404)
+
+    # Client info
+    name = (form.get("business_name") or "").strip()
+    if name:
+        client.business_name = name
+
+    addr = (form.get("business_address") or "").strip()
+    client.business_address = addr or None
+
+    email = (form.get("owner_email") or "").strip()
+    if email:
+        client.owner_email = email
+
+    # Schedule
+    tz = (form.get("timezone") or "").strip()
+    if tz:
+        client.timezone = tz
+
+    raw_days = form.getlist("working_days")
+    if raw_days:
+        try:
+            client.working_days = sorted(
+                {int(d) for d in raw_days if d.isdigit() and 1 <= int(d) <= 7}
+            )
+        except (ValueError, TypeError):
+            pass  # keep existing value
+
+    bh_start = (form.get("bh_start") or "").strip()
+    bh_end = (form.get("bh_end") or "").strip()
+    if bh_start and bh_end:
+        client.business_hours = {"start": bh_start, "end": bh_end}
+
+    for field in ("slot_duration_minutes", "buffer_minutes", "lead_time_minutes"):
+        val = (form.get(field) or "").strip()
+        if val.isdigit():
+            setattr(client, field, int(val))
+
+    await db.commit()
+    return RedirectResponse(
+        url=f"/admin/client/{client_id}?message=Settings+saved",
+        status_code=303,
+    )
+
+
 @router.get("/test-calendar/{client_id}")
 async def test_calendar(client_id: str, db: AsyncSession = Depends(get_db)):
     """Debug endpoint: test Google Calendar connectivity for a client."""
