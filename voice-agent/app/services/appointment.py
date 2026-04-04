@@ -121,12 +121,15 @@ async def book_appointment(
             slot_minutes = client.slot_duration_minutes if client else 60
             end_dt = requested_slot + timedelta(minutes=slot_minutes)
 
+            summary = booking_request.name
+            if booking_request.problem_description:
+                summary = f"{booking_request.name} – {booking_request.problem_description}"
             event_id = await create_event(
                 db,
                 client_id,
                 requested_slot,
                 end_dt,
-                summary=booking_request.name,
+                summary=summary,
                 description=description,
             )
             db.add(Appointment(

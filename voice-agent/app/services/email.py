@@ -99,6 +99,8 @@ async def send_owner_alert(
     caller_email: str,
     appointment_dt: datetime | None,
     business_timezone: str,
+    caller_address: str = "",
+    problem_description: str = "",
 ) -> None:
     """Send appointment action alert to the business owner.
 
@@ -111,6 +113,8 @@ async def send_owner_alert(
         caller_email: Caller's email address.
         appointment_dt: Scheduled datetime (None when not relevant).
         business_timezone: IANA timezone string.
+        caller_address: Caller's service address (optional).
+        problem_description: Summary of the issue (optional).
     """
     subject = f"[Voice Agent] Appointment {action} — {caller_name}"
 
@@ -118,12 +122,17 @@ async def send_owner_alert(
     if appointment_dt is not None:
         dt_line = f"Appointment time: {_format_dt(appointment_dt, business_timezone)}\n\n"
 
+    address_line = f"  Address: {caller_address}\n" if caller_address else ""
+    problem_line = f"\nIssue: {problem_description}\n" if problem_description else ""
+
     body = (
         f"A caller has {action} an appointment.\n\n"
         "Caller details:\n"
         f"  Name:  {caller_name}\n"
         f"  Phone: {caller_phone}\n"
-        f"  Email: {caller_email}\n\n"
+        f"  Email: {caller_email}\n"
+        f"{address_line}"
+        f"{problem_line}\n"
         f"{dt_line}"
         f"Business: {business_name}"
     )

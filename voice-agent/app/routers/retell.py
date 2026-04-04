@@ -235,6 +235,8 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
                     caller_email=booking_req.email,
                     appointment_dt=booking.slot,
                     business_timezone=tz,
+                    caller_address=booking_req.address,
+                    problem_description=booking_req.problem_description,
                 ))
             else:
                 result = {
