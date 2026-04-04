@@ -27,7 +27,7 @@ _REASON_LABELS: dict[str, str] = {
 async def _send(to_address: str, subject: str, body: str) -> None:
     """Internal helper: send a plain-text email via SendGrid HTTP API."""
     settings = get_settings()
-    if not settings.smtp_password:
+    if not settings.sendgrid_api_key:
         logger.debug("SendGrid API key not configured; skipping email to %s", to_address)
         return
     if not to_address:
@@ -40,7 +40,7 @@ async def _send(to_address: str, subject: str, body: str) -> None:
             subject=subject,
             plain_text_content=body,
         )
-        sg = SendGridAPIClient(settings.smtp_password)
+        sg = SendGridAPIClient(settings.sendgrid_api_key)
         response = sg.send(message)
         logger.info("Email sent to %s: %s (status %s)", to_address, subject, response.status_code)
     except Exception as exc:
