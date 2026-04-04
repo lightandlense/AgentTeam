@@ -71,8 +71,13 @@ async def retell_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     """
     body = await request.json()
 
+    # DEBUG: log full body to Railway stdout so we can see Retell's exact format
+    import json as _json
+    print("RETELL_WEBHOOK_BODY:", _json.dumps(body), flush=True)
+
     # Only handle tool_call events; ignore others (e.g. call_started, call_ended)
     if body.get("event") != "tool_call":
+        print("RETELL_WEBHOOK_IGNORED_EVENT:", body.get("event"), flush=True)
         return {"status": "received"}
 
     tool_name = body.get("name")
