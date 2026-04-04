@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Agent Admin</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { margin-bottom: 1.5rem; }
+        .clients { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 6px; padding: 1.2rem; text-decoration: none; color: inherit; display: block; }
+        .card:hover { background: #f8f8f8; border-color: #aaa; }
+        .card h2 { margin: 0 0 0.4rem; font-size: 1.1rem; }
+        .card p { margin: 0; color: #666; font-size: 0.9rem; }
+        .no-clients { color: #888; }
+    </style>
+</head>
+<body>
+    <h1>Voice Agent Admin</h1>
+
+    {% if clients %}
+    <div class="clients">
+        {% for c in clients %}
+        <a class="card" href="/admin/client/{{ c.client_id }}">
+            <h2>{{ c.business_name }}</h2>
+            <p>{{ c.timezone }} &mdash; {{ c.working_days | length }} working day{{ 's' if c.working_days | length != 1 else '' }}</p>
+            <p>{{ c.owner_email }}</p>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-clients">No clients found.</p>
+    {% endif %}
+</body>
+</html>

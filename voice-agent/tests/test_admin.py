@@ -40,6 +40,94 @@ def _make_mock_db(rows: list | None = None):
 
 
 # ---------------------------------------------------------------------------
+# Helpers for dashboard tests
+# ---------------------------------------------------------------------------
+
+
+def _mock_client(
+    client_id="test-id",
+    business_name="Test Business",
+    timezone="America/Denver",
+    working_days=None,
+    business_hours=None,
+    slot_duration_minutes=60,
+    buffer_minutes=0,
+    lead_time_minutes=60,
+    business_address="123 Main St",
+    owner_email="owner@test.com",
+):
+    from unittest.mock import MagicMock
+    c = MagicMock()
+    c.client_id = client_id
+    c.business_name = business_name
+    c.timezone = timezone
+    c.working_days = working_days if working_days is not None else [1, 2, 3, 4, 5]
+    c.business_hours = business_hours if business_hours is not None else {"start": "09:00", "end": "17:00"}
+    c.slot_duration_minutes = slot_duration_minutes
+    c.buffer_minutes = buffer_minutes
+    c.lead_time_minutes = lead_time_minutes
+    c.business_address = business_address
+    c.owner_email = owner_email
+    return c
+
+
+def _make_scalars_db(scalar_items: list):
+    """Mock db where execute().scalars().all() returns scalar_items."""
+    mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_scalars = MagicMock()
+    mock_scalars.all.return_value = scalar_items
+    mock_result.scalars.return_value = mock_scalars
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    async def _override():
+        yield mock_session
+
+    return _override
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_client_list_returns_200():
+    """GET /admin/ should return 200 and list client business names."""
+    from app.database import get_db
+
+    clients = [_mock_client(client_id="c1", business_name="HVAC Co")]
+    app.dependency_overrides[get_db] = _make_scalars_db(clients)
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get("/admin/")
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code == 200
+    assert "HVAC Co" in response.text
+
+
+@pytest.mark.asyncio
+async def test_client_list_empty():
+    """GET /admin/ with no clients should still return 200."""
+    from app.database import get_db
+
+    app.dependency_overrides[get_db] = _make_scalars_db([])
+    try:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get("/admin/")
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+    assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
 # GET /admin/documents
 # ---------------------------------------------------------------------------
 

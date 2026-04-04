@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models.client import Embedding
+from app.models.client import Client, Embedding, OAuthToken
 from app.services.ingestion import MAX_FILE_BYTES, delete_document, ingest_document
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,22 @@ templates = Jinja2Templates(
 )
 
 _ALLOWED_EXTENSIONS: frozenset[str] = frozenset({".pdf", ".docx", ".txt", ".csv"})
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/
+# ---------------------------------------------------------------------------
+
+
+@router.get("/")
+async def client_list(request: Request, db: AsyncSession = Depends(get_db)):
+    """Render a list of all clients."""
+    result = await db.execute(select(Client).order_by(Client.business_name))
+    clients = result.scalars().all()
+    return templates.TemplateResponse(
+        "client_list.html",
+        {"request": request, "clients": clients},
+    )
 
 
 # ---------------------------------------------------------------------------
