@@ -137,6 +137,9 @@ async def get_free_slots(
             window_end.astimezone(tz) if window_end.tzinfo else window_end.replace(tzinfo=tz)
         )
 
+        if effective_end <= effective_start:
+            return []
+
         service = await get_calendar_service(db, client_id)
         freebusy_response = (
             service.freebusy()

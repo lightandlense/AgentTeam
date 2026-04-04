@@ -110,6 +110,13 @@ async def book_appointment(
     Raises AppointmentError on unrecoverable calendar failures.
     """
     try:
+        now = datetime.now()
+        # Reject past slots — find alternatives from now instead
+        if requested_slot < now:
+            alt_end = now + timedelta(days=7)
+            alternatives = await get_free_slots(db, client_id, now, alt_end, max_slots=2)
+            return BookingResult(confirmed=False, event_id=None, slot=None, alternatives=alternatives)
+
         # Check if the exact slot is free (1-minute window to detect overlap)
         exact_end = requested_slot + timedelta(minutes=1)
         free = await get_free_slots(db, client_id, requested_slot, exact_end, max_slots=1)
