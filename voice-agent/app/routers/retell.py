@@ -181,19 +181,22 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
     elif tool_name == "check_availability":
         try:
             client_id = args.get("client_id", "")
-            from datetime import timedelta
+            from datetime import timedelta, date as date_type
             now = datetime.now()
             window_start = datetime.fromisoformat(args.get("window_start"))
             window_end = datetime.fromisoformat(args.get("window_end"))
             # If the agent generated a past date, find the next future date
-            # with the same day-of-week so "Wednesday" → next real Wednesday
+            # with the same day-of-week, preserving the original time-of-day
             if window_start < now:
-                duration = window_end - window_start
                 days_ahead = (window_start.weekday() - now.weekday()) % 7
                 if days_ahead == 0:
-                    days_ahead = 7  # same day of week → next week
-                window_start = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=days_ahead)
-                window_end = window_start + (duration if duration.total_seconds() > 0 else timedelta(days=1))
+                    days_ahead = 7  # same weekday → next week
+                target = now.date() + timedelta(days=days_ahead)
+                window_start = window_start.replace(year=target.year, month=target.month, day=target.day)
+                window_end = window_end.replace(year=target.year, month=target.month, day=target.day)
+                # If window_end <= window_start after replacement, extend to end of day
+                if window_end <= window_start:
+                    window_end = window_start.replace(hour=23, minute=59, second=59)
             slots = await get_free_slots(db, client_id, window_start, window_end, max_slots=3)
             if not slots:
                 result = TRANSFER_SENTINEL
