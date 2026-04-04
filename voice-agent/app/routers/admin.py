@@ -1,13 +1,16 @@
-"""Admin router for knowledge-base document management.
+"""Admin router for voice-agent management.
 
-Provides:
-    GET  /admin/documents          — list documents for a client
-    POST /admin/documents/upload   — upload and ingest a document
-    POST /admin/documents/delete   — delete all chunks for a document
+Routes:
+    GET  /admin/                             — list all clients
+    GET  /admin/client/{client_id}           — per-client dashboard
+    POST /admin/client/{client_id}/settings  — save client settings
+    GET  /admin/documents                    — list documents for a client
+    POST /admin/documents/upload             — upload and ingest a document
+    POST /admin/documents/delete             — delete all chunks for a document
+    GET  /admin/test-calendar/{client_id}    — test Google Calendar connectivity
 """
 
 import logging
-import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -20,7 +23,7 @@ from sqlalchemy.sql import func
 
 from app.database import get_db
 from app.models.client import Client, Embedding, OAuthToken
-from app.services.ingestion import MAX_FILE_BYTES, delete_document, ingest_document
+from app.services.ingestion import delete_document, ingest_document
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +57,9 @@ async def client_list(request: Request, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Client).order_by(Client.business_name))
     clients = result.scalars().all()
     return templates.TemplateResponse(
+        request,
         "client_list.html",
-        {"request": request, "clients": clients},
+        {"clients": clients},
     )
 
 
@@ -97,9 +101,9 @@ async def client_dashboard(
     doc_count = doc_result.scalar() or 0
 
     return templates.TemplateResponse(
+        request,
         "client_dashboard.html",
         {
-            "request": request,
             "client": client,
             "token": token,
             "doc_count": doc_count,
@@ -139,9 +143,9 @@ async def list_documents(
     logger.debug("list_documents: client=%s found %d docs", client_id, len(documents))
 
     return templates.TemplateResponse(
+        request,
         "documents.html",
         {
-            "request": request,
             "client_id": client_id,
             "documents": documents,
             "message": message,
@@ -178,9 +182,9 @@ async def upload_document(
             for row in result.all()
         ]
         return templates.TemplateResponse(
+            request,
             "documents.html",
             {
-                "request": request,
                 "client_id": client_id,
                 "documents": documents,
                 "message": f"Unsupported file type: '{ext}'. Allowed: .pdf, .docx, .txt, .csv",
@@ -205,9 +209,9 @@ async def upload_document(
             for row in result.all()
         ]
         return templates.TemplateResponse(
+            request,
             "documents.html",
             {
-                "request": request,
                 "client_id": client_id,
                 "documents": documents,
                 "message": str(exc),
@@ -314,7 +318,7 @@ async def test_calendar(client_id: str, db: AsyncSession = Depends(get_db)):
     """Debug endpoint: test Google Calendar connectivity for a client."""
     from app.services.calendar import get_free_slots, CalendarError
     try:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         slots = await get_free_slots(db, client_id, now, now + timedelta(days=7), max_slots=3)
         return {"ok": True, "slots": [s.isoformat() for s in slots]}
     except CalendarError as exc:
