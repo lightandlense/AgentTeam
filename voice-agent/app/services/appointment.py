@@ -208,12 +208,14 @@ async def find_appointment_by_phone(
     calendar API call required.
     """
     try:
+        now = datetime.now(timezone.utc)
         result = await db.execute(
             select(Appointment)
             .where(
                 Appointment.client_id == client_id,
                 Appointment.caller_phone == caller_phone,
                 Appointment.status == "active",
+                Appointment.slot_dt >= now,
             )
             .order_by(Appointment.slot_dt)
         )
