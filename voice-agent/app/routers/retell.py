@@ -204,7 +204,7 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
                     return fallback
 
             window_start = _parse_window_dt(args.get("window_start", ""), now)
-            window_end = _parse_window_dt(args.get("window_end", ""), now + timedelta(days=7))
+            window_end = _parse_window_dt(args.get("window_end", ""), now + timedelta(days=14))
             # If the agent generated a past date, find the next future date
             # with the same day-of-week, preserving the original time-of-day
             if window_start < now:
