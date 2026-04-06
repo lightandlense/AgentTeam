@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
@@ -68,8 +68,6 @@ def _args_from_body(body: dict) -> dict:
     - Conversation Flow v2: {tool_call_id, input: {...}}
     - Conversation Flow flat: {tool_call_id, param1, param2, ...}
     """
-    print("RETELL_BODY_KEYS:", list(body.keys()), flush=True)
-    print("RETELL_BODY:", body, flush=True)
     if "arguments" in body:
         return body["arguments"]
     if "args" in body:
@@ -182,7 +180,7 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
         try:
             client_id = args.get("client_id", "")
             from datetime import timedelta, date as date_type
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             window_start = datetime.fromisoformat(args.get("window_start"))
             window_end = datetime.fromisoformat(args.get("window_end"))
             # If the agent generated a past date, find the next future date
