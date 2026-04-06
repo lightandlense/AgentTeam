@@ -130,16 +130,27 @@ async def book_appointment(
             alternatives = await get_free_slots(db, client_id, now, alt_end, max_slots=2)
             return BookingResult(confirmed=False, event_id=None, slot=None, alternatives=alternatives)
 
-        # Check if the exact slot is free (1-minute window to detect overlap)
-        exact_end = requested_slot + timedelta(minutes=1)
-        free = await get_free_slots(db, client_id, requested_slot, exact_end, max_slots=1)
+        # Check if the exact slot is free using freebusy API directly
+        result = await db.execute(select(Client).where(Client.client_id == client_id))
+        client = result.scalar_one_or_none()
+        slot_minutes = client.slot_duration_minutes if client else 60
+        slot_end = requested_slot + timedelta(minutes=slot_minutes)
+        service = await _get_calendar_service(db, client_id)
+        fb = service.freebusy().query(body={
+            "timeMin": requested_slot.isoformat(),
+            "timeMax": slot_end.isoformat(),
+            "items": [{"id": "primary"}],
+        }).execute()
+        busy = fb.get("calendars", {}).get("primary", {}).get("busy", [])
+        slot_is_free = not any(
+            requested_slot < datetime.fromisoformat(p["end"].replace("Z", "+00:00"))
+            and slot_end > datetime.fromisoformat(p["start"].replace("Z", "+00:00"))
+            for p in busy
+        )
 
-        if free:
+        if slot_is_free:
             description = _build_description(booking_request)
-            result = await db.execute(select(Client).where(Client.client_id == client_id))
-            client = result.scalar_one_or_none()
-            slot_minutes = client.slot_duration_minutes if client else 60
-            end_dt = requested_slot + timedelta(minutes=slot_minutes)
+            end_dt = slot_end
 
             summary = booking_request.name
             if booking_request.problem_description:
