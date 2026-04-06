@@ -8,14 +8,8 @@ import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-try:
-    from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail
-    _SENDGRID_AVAILABLE = True
-except ImportError:
-    SendGridAPIClient = None  # type: ignore[assignment,misc]
-    Mail = None  # type: ignore[assignment,misc]
-    _SENDGRID_AVAILABLE = False
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 from app.config import get_settings
 
@@ -38,9 +32,6 @@ async def _send(to_address: str, subject: str, body: str) -> None:
         return
     if not to_address:
         logger.debug("No recipient address; skipping email")
-        return
-    if not _SENDGRID_AVAILABLE:
-        logger.debug("sendgrid package not installed; skipping email to %s", to_address)
         return
     try:
         message = Mail(

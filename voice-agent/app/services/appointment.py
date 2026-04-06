@@ -9,7 +9,7 @@ app.services.calendar.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -110,7 +110,7 @@ async def book_appointment(
     Raises AppointmentError on unrecoverable calendar failures.
     """
     try:
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
         # Reject past slots — find alternatives from now instead
         if requested_slot < now:
             alt_end = now + timedelta(days=7)
