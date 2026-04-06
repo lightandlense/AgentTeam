@@ -44,6 +44,16 @@ __all__ = [
 _MAX_WINDOW_DAYS = 30
 
 
+def _normalize_phone(phone: str) -> str:
+    """Strip all non-digit characters for consistent phone matching."""
+    import re
+    digits = re.sub(r"\D", "", phone)
+    # Drop leading country code '1' for US numbers (11 digits → 10)
+    if len(digits) == 11 and digits.startswith("1"):
+        digits = digits[1:]
+    return digits
+
+
 class AppointmentError(Exception):
     """Caller-safe exception for appointment lifecycle failures.
 
@@ -146,7 +156,7 @@ async def book_appointment(
             db.add(Appointment(
                 client_id=client_id,
                 event_id=event_id,
-                caller_phone=booking_request.phone,
+                caller_phone=_normalize_phone(booking_request.phone),
                 caller_name=booking_request.name,
                 caller_email=booking_request.email,
                 slot_dt=requested_slot,
@@ -213,7 +223,7 @@ async def find_appointment_by_phone(
             select(Appointment)
             .where(
                 Appointment.client_id == client_id,
-                Appointment.caller_phone == caller_phone,
+                Appointment.caller_phone == _normalize_phone(caller_phone),
                 Appointment.status == "active",
                 Appointment.slot_dt >= now,
             )
