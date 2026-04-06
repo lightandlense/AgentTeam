@@ -183,8 +183,28 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
             client_id = args.get("client_id", "")
             from datetime import timedelta, date as date_type
             now = datetime.now()
-            window_start = datetime.fromisoformat(args.get("window_start"))
-            window_end = datetime.fromisoformat(args.get("window_end"))
+
+            def _parse_window_dt(raw: str, fallback: datetime) -> datetime:
+                """Parse ISO datetime string, handling '24:00:00' and other LLM quirks."""
+                if not raw:
+                    return fallback
+                import re as _re
+                # Fix T24:xx:xx → advance date by 1 day, use 00:xx:xx
+                def _fix_hour24(m: "re.Match") -> str:  # type: ignore[name-defined]
+                    return f'T00:{m.group(1)}'
+                add_day = bool(_re.search(r'T24:', raw))
+                raw = _re.sub(r'T24:(\d{2}:\d{2})', _fix_hour24, raw)
+                try:
+                    dt = datetime.fromisoformat(raw)
+                    if add_day:
+                        dt += timedelta(days=1)
+                    # Strip timezone info for naive comparison
+                    return dt.replace(tzinfo=None) if dt.tzinfo else dt
+                except ValueError:
+                    return fallback
+
+            window_start = _parse_window_dt(args.get("window_start", ""), now)
+            window_end = _parse_window_dt(args.get("window_end", ""), now + timedelta(days=7))
             # If the agent generated a past date, find the next future date
             # with the same day-of-week, preserving the original time-of-day
             if window_start < now:
