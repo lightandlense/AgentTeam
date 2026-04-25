@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
@@ -182,7 +182,7 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
         try:
             client_id = args.get("client_id", "")
             from datetime import timedelta, date as date_type
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
 
             def _parse_window_dt(raw: str, fallback: datetime) -> datetime:
                 """Parse ISO datetime string, handling '24:00:00' and other LLM quirks."""
@@ -198,8 +198,8 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
                     dt = datetime.fromisoformat(raw)
                     if add_day:
                         dt += timedelta(days=1)
-                    # Strip timezone info for naive comparison
-                    return dt.replace(tzinfo=None) if dt.tzinfo else dt
+                    # Keep existing timezone; treat naive as UTC so comparisons work
+                    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
                 except ValueError:
                     return fallback
 

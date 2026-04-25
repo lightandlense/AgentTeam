@@ -120,20 +120,24 @@ async def book_appointment(
     Raises AppointmentError on unrecoverable calendar failures.
     """
     try:
-        # Use UTC-aware now so it compares cleanly with tz-aware slots from get_free_slots
         now = datetime.now(timezone.utc)
+
+        # Fetch client first for timezone and slot duration
+        client_result = await db.execute(select(Client).where(Client.client_id == client_id))
+        client = client_result.scalar_one_or_none()
+        slot_minutes = client.slot_duration_minutes if client else 60
+        client_tz = ZoneInfo(client.timezone if client else "UTC")
+
         if requested_slot.tzinfo is None:
-            requested_slot = requested_slot.replace(tzinfo=timezone.utc)
+            # Treat naive slots as client local time, not UTC
+            requested_slot = requested_slot.replace(tzinfo=client_tz)
+
         # Reject past slots — find alternatives from now instead
         if requested_slot < now:
             alt_end = now + timedelta(days=7)
             alternatives = await get_free_slots(db, client_id, now, alt_end, max_slots=2)
             return BookingResult(confirmed=False, event_id=None, slot=None, alternatives=alternatives)
 
-        # Check if the exact slot is free using freebusy API directly
-        result = await db.execute(select(Client).where(Client.client_id == client_id))
-        client = result.scalar_one_or_none()
-        slot_minutes = client.slot_duration_minutes if client else 60
         slot_end = requested_slot + timedelta(minutes=slot_minutes)
         service = await _get_calendar_service(db, client_id)
         fb = service.freebusy().query(body={
