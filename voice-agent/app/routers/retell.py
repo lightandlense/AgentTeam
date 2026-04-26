@@ -205,27 +205,13 @@ async def _dispatch(tool_name: str, tool_call_id: str, args: dict, db: AsyncSess
 
             window_start = _parse_window_dt(args.get("window_start", ""), now)
             window_end = _parse_window_dt(args.get("window_end", ""), now + timedelta(days=14))
-            # Always start from now so the agent finds soonest available first.
-            # Extend window_end to cover at least 14 days from now.
-            if window_start > now:
-                window_end = max(window_end, now + timedelta(days=14))
-                window_start = now
-            # If the agent generated a past date, find the next future date
-            # with the same day-of-week, preserving the original time-of-day
+            # Always start from now so the agent finds soonest available.
+            # Never roll past dates forward by a week — that just hides the
+            # nearest slot. Just clamp to now and extend the search window.
             if window_start < now:
-                days_ahead = (window_start.weekday() - now.weekday()) % 7
-                if days_ahead == 0:
-                    days_ahead = 7  # same weekday → next week
-                target = now.date() + timedelta(days=days_ahead)
-                window_start = window_start.replace(year=target.year, month=target.month, day=target.day)
-                window_end = window_end.replace(year=target.year, month=target.month, day=target.day)
-                # If window is entirely before 8am (off-hours), use full business-hours day
-                if window_end.hour <= 8:
-                    window_start = window_start.replace(hour=8, minute=0, second=0)
-                    window_end = window_start.replace(hour=20, minute=0, second=0)
-                # If window_end <= window_start, extend to end of day
-                if window_end <= window_start:
-                    window_end = window_start.replace(hour=23, minute=59, second=59)
+                window_start = now
+            if window_end < now + timedelta(days=14):
+                window_end = now + timedelta(days=14)
             slots = await get_free_slots(db, client_id, window_start, window_end, max_slots=3)
             if not slots:
                 result = TRANSFER_SENTINEL
